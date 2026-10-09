@@ -5,6 +5,7 @@
        user signed in to Microsoft in their browser. It never signs in itself, never writes a file and never deletes anything. -->
   <PropertyGroup>
     <OutputType>Exe</OutputType>
+    <ApplicationIcon>..\Assistant.ExplorerExtension\Assets\Assistant.ico</ApplicationIcon>
     <TargetFramework>net8.0</TargetFramework>
     <IsPackable>false</IsPackable>
     <InvariantGlobalization>true</InvariantGlobalization>

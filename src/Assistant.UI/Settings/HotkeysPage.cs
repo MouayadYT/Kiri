@@ -3,9 +3,7 @@ using Assistant.Core.Settings;
 namespace Assistant.UI.Settings;
 
 /// <summary>
-/// Hotkeys (PROJECT_SPEC §4.0): the global shortcuts. The ones that open the Search or Ask bar and start Visual Intelligence can be
-/// changed, and take effect the next time the Assistant starts, since their keys are registered with Windows then. The third opens a
-/// feature that does not exist yet, so it shows what is saved and cannot be changed yet.
+/// Hotkeys (PROJECT_SPEC §4.0): the global shortcuts. Saved changes update their Windows registrations immediately.
 /// </summary>
 public sealed class HotkeysPage : SettingsPage
 {

@@ -1,4 +1,6 @@
 using System.Windows.Interop;
+using Assistant.Core.Contracts;
+using Assistant.Core.Events;
 using Assistant.Core.Settings;
 using Assistant.UI.Views;
 using Assistant.Windows.Hotkeys;
@@ -13,7 +15,8 @@ internal sealed class OverlayHotkeyBinding : IDisposable
 {
     private readonly AssistantWindow _window;
     private readonly GlobalHotkeyService _hotkeys;
-    private readonly Hotkey? _shortcut;
+    private Hotkey? _shortcut;
+    private readonly IDisposable? _settingsSubscription;
     private readonly Action _invoke;
     private HwndSource? _source;
     private bool _disposed;
@@ -28,6 +31,27 @@ internal sealed class OverlayHotkeyBinding : IDisposable
         _window.SourceInitialized += OnSourceInitialized;
         _window.Closed += OnClosed;
         if (new WindowInteropHelper(window).Handle != 0) Attach();
+    }
+
+    public OverlayHotkeyBinding(
+        AssistantWindow window, GlobalHotkeyService hotkeys, AppSettings settings, IAppEventBus events,
+        Func<AppSettings, Hotkey?> select, Action? invoke = null)
+        : this(window, hotkeys, select(settings), invoke)
+    {
+        _settingsSubscription = events.Subscribe<OverlayHotkeyBinding, SettingsSaved>(this, (binding, saved, _) =>
+        {
+            // Settings may be published from a worker. Win32 registrations belong to the window's thread.
+            if (window.Dispatcher.CheckAccess()) binding.UpdateShortcut(select(saved.Settings));
+            else window.Dispatcher.BeginInvoke(() => binding.UpdateShortcut(select(saved.Settings)));
+            return Task.CompletedTask;
+        });
+    }
+
+    private void UpdateShortcut(Hotkey? shortcut)
+    {
+        if (_disposed) return;
+        _shortcut = shortcut;
+        if (_source is { IsDisposed: false }) _hotkeys.Register(_source.Handle, shortcut);
     }
 
     private void OnSourceInitialized(object? sender, EventArgs e) => Attach();
@@ -55,6 +79,7 @@ internal sealed class OverlayHotkeyBinding : IDisposable
     {
         if (_disposed) return;
         _disposed = true;
+        _settingsSubscription?.Dispose();
         _hotkeys.Invoked -= OnInvoked;
         _hotkeys.Unregister();
         if (_source is { IsDisposed: false }) _source.RemoveHook(OnMessage);

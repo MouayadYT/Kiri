@@ -37,6 +37,7 @@ Log('W', "srv  llama_server: security: no API key is set and CORS allows all ori
 
 var onDevices = ValueOf("--device") is { } device && device != "none";
 var failure = scenario is not null && launch >= scenario.StartupFailureFromLaunch
+    && launch <= scenario.StartupFailureThroughLaunch
     && (!scenario.StartupFailureOnDevicesOnly || onDevices)
     ? scenario.StartupFailure
     : null;

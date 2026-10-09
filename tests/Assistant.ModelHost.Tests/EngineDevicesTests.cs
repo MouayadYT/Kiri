@@ -137,6 +137,19 @@ public sealed class EngineDevicesTests
     }
 
     [Fact]
+    public async Task Start_RetriesAnEmptyProbe_BeforeChoosingAutomaticDevices()
+    {
+        using var setup = FakeEngineSetup.Create(new FakeEngineScenario());
+        var probe = new FakeProbe([]) { LaterDevices = [Big] };
+        await using var manager = CreateManager(setup, probe);
+
+        await manager.StartAsync(setup.Launch, TestPipes.Timeout());
+
+        Assert.Equal(2, probe.Calls);
+        Assert.Equal("Vulkan0", ValueAfter(setup.Report(1).Arguments, "--device"));
+    }
+
+    [Fact]
     public async Task Start_KeepsTheDevicesALaunchNames_WithoutListingAny()
     {
         using var setup = FakeEngineSetup.Create(new FakeEngineScenario());
@@ -149,8 +162,31 @@ public sealed class EngineDevicesTests
         Assert.Equal(0, probe.Calls);
     }
 
-    [Fact]
-    public async Task Start_FallsBackToTheCpu_WhenTheEngineDoesNotStartOnItsDevices()
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task Start_RetriesTheGpu_WhenTheFirstLoadFails(bool explicitDevice)
+    {
+        using var setup = FakeEngineSetup.Create(new FakeEngineScenario
+        {
+            StartupFailure = "model",
+            StartupFailureOnDevicesOnly = true,
+            StartupFailureThroughLaunch = 1,
+        });
+        await using var manager = CreateManager(setup, new FakeProbe([Big]));
+
+        await manager.StartAsync(explicitDevice ? setup.Launch with { Devices = ["Vulkan0"] } : setup.Launch, TestPipes.Timeout());
+
+        Assert.Equal(ModelProcessState.Running, manager.State);
+        Assert.Equal(2, setup.Launches);
+        Assert.Equal("Vulkan0", ValueAfter(setup.Report(1).Arguments, "--device"));
+        Assert.Equal("Vulkan0", ValueAfter(setup.Report(2).Arguments, "--device"));
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task Start_ReportsPersistentGpuFailure_WithoutSilentlyLoadingOnCpu(bool explicitDevice)
     {
         using var setup = FakeEngineSetup.Create(new FakeEngineScenario
         {
@@ -159,12 +195,15 @@ public sealed class EngineDevicesTests
         });
         await using var manager = CreateManager(setup, new FakeProbe([Big]));
 
-        await manager.StartAsync(setup.Launch, TestPipes.Timeout());
+        var failure = await Assert.ThrowsAsync<ModelProcessException>(() => manager.StartAsync(
+            explicitDevice ? setup.Launch with { Devices = ["Vulkan0"] } : setup.Launch, TestPipes.Timeout()));
 
-        Assert.Equal(ModelProcessState.Running, manager.State);
+        Assert.Equal(ModelProcessFailure.ModelLoadFailed, failure.Failure);
+        Assert.Equal(ModelProcessState.Failed, manager.State);
         Assert.Equal(2, setup.Launches);
         Assert.Equal("Vulkan0", ValueAfter(setup.Report(1).Arguments, "--device"));
-        Assert.Equal("none", ValueAfter(setup.Report(2).Arguments, "--device"));
+        Assert.Equal("Vulkan0", ValueAfter(setup.Report(2).Arguments, "--device"));
+        Assert.Null(manager.ProcessId);
     }
 
     [Fact]
@@ -192,11 +231,12 @@ public sealed class EngineDevicesTests
     private sealed class FakeProbe(IReadOnlyList<EngineDevice> devices) : IEngineDeviceProbe
     {
         public int Calls { get; private set; }
+        public IReadOnlyList<EngineDevice>? LaterDevices { get; init; }
 
         public Task<IReadOnlyList<EngineDevice>> ListAsync(ModelRuntime runtime, CancellationToken cancellationToken)
         {
             Calls++;
-            return Task.FromResult(devices);
+            return Task.FromResult(Calls > 1 ? LaterDevices ?? devices : devices);
         }
     }
 }

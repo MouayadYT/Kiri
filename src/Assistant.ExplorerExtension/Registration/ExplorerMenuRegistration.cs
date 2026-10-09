@@ -7,7 +7,7 @@ namespace Assistant.ExplorerExtension.Registration;
 /// <c>Software\Classes\SystemFileAssociations\.ext\shell</c> in the user's own registry, for each supported extension: File
 /// Explorer reads it from there whichever app opens the type, no administrator is needed, and nothing is loaded into
 /// <c>explorer.exe</c>. Choosing it starts this entry point with <c>ask "&lt;path&gt;"</c>, once for each selected file. The entry
-/// is at the top of the menu, with the Assistant's mark in the menu's colour, and has the <c>Player</c> selection model: with the default one File
+/// is at the top of the menu, with the Kiri icon, and has the <c>Player</c> selection model: with the default one File
 /// Explorer shows a verb only for 15 files or fewer, and a selection of 20 pictures would have no Ask Assistant. Windows 11 lists
 /// such an entry in the classic menu, under "Show more options"; its first menu would need package identity.
 /// </summary>
@@ -25,14 +25,14 @@ internal sealed class ExplorerMenuRegistration
     /// <summary>Where the verb goes in the menu.</summary>
     public const string MenuPosition = "Top";
 
-    /// <summary>The Assistant's mark in white, for menus drawn dark, beside the entry point.</summary>
+    /// <summary>The Kiri icon for menus drawn dark, beside the entry point.</summary>
     public const string DarkMenuIconName = "AskAssistant.dark.ico";
 
-    /// <summary>The Assistant's mark in black, for menus drawn light, beside the entry point.</summary>
+    /// <summary>The Kiri icon for menus drawn light, beside the entry point.</summary>
     public const string LightMenuIconName = "AskAssistant.light.ico";
 
     /// <summary>
-    /// The <c>Icon</c> value: the mark in white or black to match the menu's theme, from the file beside the entry point, or the
+    /// The <c>Icon</c> value: the icon for the menu's theme, from the file beside the entry point, or the
     /// entry point's own icon when that file is missing. <paramref name="lightTheme"/> is <see langword="null"/> to follow Windows.
     /// </summary>
     public static string IconFor(string executable, bool? lightTheme = null)

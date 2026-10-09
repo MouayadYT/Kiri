@@ -102,6 +102,6 @@ internal static partial class EngineDeviceLog
     [LoggerMessage(EventId = 2362, Level = LogLevel.Information, Message = "The engine offloads to {ChosenCount} of {AvailableCount} devices")]
     public static partial void Chosen(ILogger logger, int chosenCount, int availableCount);
 
-    [LoggerMessage(EventId = 2363, Level = LogLevel.Warning, Message = "The engine did not start on its devices ({Failure}); starting it on the CPU only")]
-    public static partial void FallingBackToCpu(ILogger logger, ModelProcessFailure failure);
+    [LoggerMessage(EventId = 2363, Level = LogLevel.Warning, Message = "The engine did not start on its devices ({Failure}); retrying once on the same devices")]
+    public static partial void RetryingGpu(ILogger logger, ModelProcessFailure failure);
 }

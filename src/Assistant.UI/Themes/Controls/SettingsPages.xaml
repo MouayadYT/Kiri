@@ -456,25 +456,25 @@
         <HeaderedContentControl Header="Global shortcuts" Style="{StaticResource SettingsGroup}">
             <StackPanel>
                 <controls:SettingsRow Header="Search or Ask"
-                                      Status="AtNextStart" Footer="{Binding SearchOrAsk}">
+                                      Footer="{Binding SearchOrAsk}">
                     <ContentControl Content="{Binding SearchOrAsk}" ContentTemplate="{StaticResource SettingsHotkeyKeys}"
                                     IsTabStop="False" />
                 </controls:SettingsRow>
                 <Rectangle Style="{StaticResource SettingsSeparator}" />
                 <controls:SettingsRow Header="Selected text"
-                                      Status="AtNextStart" Footer="{Binding SelectedText}">
+                                      Footer="{Binding SelectedText}">
                     <ContentControl Content="{Binding SelectedText}" ContentTemplate="{StaticResource SettingsHotkeyKeys}"
                                     IsTabStop="False" />
                 </controls:SettingsRow>
                 <Rectangle Style="{StaticResource SettingsSeparator}" />
                 <controls:SettingsRow Header="Visual Intelligence"
-                                      Status="AtNextStart" Footer="{Binding VisualIntelligence}">
+                                      Footer="{Binding VisualIntelligence}">
                     <ContentControl Content="{Binding VisualIntelligence}" ContentTemplate="{StaticResource SettingsHotkeyKeys}"
                                     IsTabStop="False" />
                 </controls:SettingsRow>
                 <Rectangle Style="{StaticResource SettingsSeparator}" />
                 <controls:SettingsRow Header="Selected text by copy"
-                                      Status="AtNextStart" Footer="{Binding SelectedTextByCopy}">
+                                      Footer="{Binding SelectedTextByCopy}">
                     <ContentControl Content="{Binding SelectedTextByCopy}" ContentTemplate="{StaticResource SettingsHotkeyKeys}"
                                     IsTabStop="False" />
                 </controls:SettingsRow>

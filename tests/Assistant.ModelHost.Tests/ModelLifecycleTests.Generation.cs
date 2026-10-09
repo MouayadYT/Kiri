@@ -18,6 +18,52 @@ public sealed partial class ModelLifecycleTests
         SampleMessages.PrivateInstructions,
         [new Message(Guid.NewGuid(), MessageRole.User, SampleMessages.PrivatePrompt, DateTimeOffset.UnixEpoch)]);
 
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task ChangingTheGpu_ReloadsTheModelWithoutRestartingTheApp(bool preload)
+    {
+        using var setup = FakeEngineSetup.Create(new FakeEngineScenario());
+        await using var host = new TestHost(setup);
+        await using var lifecycle = host.CreateLifecycle(out _);
+        var settings = new ReloadSettings(new AppSettings
+        {
+            Model = new ModelSettings { ModelFilePath = setup.ScenarioPath, UseGpuAcceleration = false },
+        });
+        var models = new LocalModelService(lifecycle, settings, new NoModelProfiles(), NullLogger<LocalModelService>.Instance);
+
+        await models.PreloadAsync(TestPipes.Timeout());
+        Assert.Equal("none", ValueAfter(setup.Report(1).Arguments, "--device"));
+
+        foreach (var device in new[] { "Vulkan0", "Vulkan1" })
+        {
+            settings.Current = settings.Current with
+            {
+                Model = settings.Current.Model with { UseGpuAcceleration = true, GpuDeviceId = device },
+            };
+            if (preload) await models.PreloadAsync(TestPipes.Timeout());
+            else await ReadAllAsync(models.GenerateAsync(Question, TestPipes.Timeout()));
+            Assert.Equal(device, ValueAfter(setup.Report(setup.Launches).Arguments, "--device"));
+        }
+
+        Assert.Equal(3, setup.Launches);
+        await models.PreloadAsync(TestPipes.Timeout());
+        await ReadAllAsync(models.GenerateAsync(Question, TestPipes.Timeout()));
+        Assert.Equal(3, setup.Launches);
+        Assert.Equal(1, host.Launcher.Started);
+    }
+
+    private sealed class ReloadSettings(AppSettings settings) : ISettingsService
+    {
+        public AppSettings Current { get; set; } = settings;
+        public Task<AppSettings> LoadAsync(CancellationToken cancellationToken = default) => Task.FromResult(Current);
+        public Task SaveAsync(AppSettings settings, CancellationToken cancellationToken = default)
+        {
+            Current = settings;
+            return Task.CompletedTask;
+        }
+    }
+
     [Fact]
     public async Task TheFirstQuestion_StartsTheHostAndLoadsTheModel_ThenStreamsTheAnswer()
     {

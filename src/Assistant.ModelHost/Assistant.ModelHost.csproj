@@ -4,6 +4,7 @@
        console. It serves the model-host protocol defined in Assistant.Core over a named pipe. -->
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
+    <ApplicationIcon>..\Assistant.ExplorerExtension\Assets\Assistant.ico</ApplicationIcon>
     <TargetFramework>net8.0-windows10.0.22621.0</TargetFramework>
     <PlatformTarget>x64</PlatformTarget>
     <!-- Source-generated P/Invoke (LibraryImport) for the job object that ties the engine to the host needs unsafe code. -->

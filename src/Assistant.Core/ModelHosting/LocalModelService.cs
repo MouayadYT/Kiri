@@ -51,6 +51,7 @@ public sealed partial class LocalModelService(
     // context), so what was asked is what is compared with what is wanted, and such a model is not loaded over and over.
     private ModelInfo? _loaded;
     private int _loadedWindow;
+    private ModelFiles? _loadedFiles;
 
     // Reading pictures only when it is needed (ModelSettings.VisionOnDemand): the questions with a picture that are being answered now, and the wait
     // that puts the projector away again once none has been asked for a while.
@@ -98,7 +99,7 @@ public sealed partial class LocalModelService(
         // The loaded model answers, unless the conversation wants the other window: then it is the model as it will be once it is loaded again,
         // so that what is asked of it is fitted to the window it will have.
         var choice = await FindModelAsync(cancellationToken).ConfigureAwait(false);
-        if (lifecycle.Model is { } loaded && (choice is null || HasWindowOf(loaded, choice.Files)))
+        if (lifecycle.Model is { } loaded && (choice is null || HasConfigurationOf(loaded, choice.Files)))
         {
             // A model that is loaded without the projector it has (pictures are read only when it is needed) reads pictures all the same: it is
             // given them, and loaded with the projector then.
@@ -209,7 +210,7 @@ public sealed partial class LocalModelService(
 
                 var choice = await FindModelAsync(cancellationToken).ConfigureAwait(false);
                 if (lifecycle.Model is not { SupportsVision: true } loaded || choice is not { VisionOnDemand: true, Files.ProjectorPath: not null }
-                    || !HasWindowOf(loaded, choice.Files))
+                    || !HasConfigurationOf(loaded, choice.Files))
                 {
                     return;
                 }
@@ -218,6 +219,7 @@ public sealed partial class LocalModelService(
                 var model = await lifecycle.LoadAsync(choice.Files with { ProjectorPath = null }, cancellationToken).ConfigureAwait(false);
                 _loaded = model;
                 _loadedWindow = choice.Files.ContextLength ?? ModelFiles.DefaultContextLength;
+                _loadedFiles = choice.Files;
             }
             finally
             {
@@ -238,14 +240,9 @@ public sealed partial class LocalModelService(
     /// <inheritdoc/>
     public async Task<ModelInfo?> PreloadAsync(CancellationToken cancellationToken = default)
     {
-        if (lifecycle.Model is { } loaded)
-        {
-            return loaded;
-        }
-
         if (await FindModelAsync(cancellationToken).ConfigureAwait(false) is null)
         {
-            return null;
+            return lifecycle.Model;
         }
 
         LogPreloading(logger);
@@ -313,7 +310,7 @@ public sealed partial class LocalModelService(
             {
                 LogLoadingOnFirstUse(logger);
             }
-            else if (HasWindowOf(current, files))
+            else if (HasConfigurationOf(current, choice.Files))
             {
                 LogLoadingForPictures(logger);
             }
@@ -331,6 +328,7 @@ public sealed partial class LocalModelService(
             var model = await lifecycle.LoadAsync(files, cancellationToken).ConfigureAwait(false);
             _loaded = model;
             _loadedWindow = window;
+            _loadedFiles = choice.Files;
             _projectorOnDemand = onDemand;
             return model;
         }
@@ -343,14 +341,22 @@ public sealed partial class LocalModelService(
     // Whether the loaded model is what is asked of it: the window the conversation wants, and, for a question that carries a picture, the projector
     // when the model has one to load (it may have been loaded without it: pictures are read only when it is needed, or the projector came later).
     private bool Suits(ModelInfo loaded, ModelChoice wanted, bool pictures) =>
-        HasWindowOf(loaded, wanted.Files) && (!pictures || wanted.Files.ProjectorPath is null || loaded.SupportsVision);
+        HasConfigurationOf(loaded, wanted.Files) && (!pictures || wanted.Files.ProjectorPath is null || loaded.SupportsVision);
 
-    // Whether the loaded model has the window these files would be loaded with: the one this service asked for it, or, for a model loaded elsewhere
-    // (Settings, setup), the one it has.
-    private bool HasWindowOf(ModelInfo loaded, ModelFiles files)
+    // Compare the requested configuration, since the engine may clamp the context or temporarily omit the vision projector.
+    // For a model loaded elsewhere (Settings, setup), only its reported context is known.
+    private bool HasConfigurationOf(ModelInfo loaded, ModelFiles files)
     {
         var window = files.ContextLength ?? ModelFiles.DefaultContextLength;
-        return _loaded is { } mine && mine.Equals(loaded) ? _loadedWindow == window : loaded.ContextLength == window;
+        if (_loaded is not { } mine || !mine.Equals(loaded)) return loaded.ContextLength == window;
+
+        // Reusing a loaded model must also honor changes to the device and files. In particular, a model
+        // preloaded on CPU must not stay there after the user enables GPU acceleration.
+        return _loadedWindow == window && _loadedFiles is { } previous
+            && previous.CpuOnly == files.CpuOnly && previous.GpuDeviceId == files.GpuDeviceId
+            && previous.ModelPath == files.ModelPath && previous.ProjectorPath == files.ProjectorPath
+            && previous.ChatTemplatePath == files.ChatTemplatePath
+            && previous.RuntimeArguments.SequenceEqual(files.RuntimeArguments);
     }
 
     // A model that came packaged with the Assistant is loaded only when its files are the ones that were packaged (PROJECT_SPEC §3.5, step 123): present, the

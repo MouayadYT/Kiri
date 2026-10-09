@@ -64,7 +64,7 @@ internal static class AppBootstrapper
             // The one read that waits: the shortcut is registered with Windows before the application runs. Nothing is on
             // screen yet and no dispatcher is running to be held up, and the service reads the file on the thread pool.
             var settings = host.Services.GetRequiredService<ISettingsService>().LoadAsync().GetAwaiter().GetResult();
-            exitCode = RunApplication(host.Services, logger, startTimestamp, settings.Hotkeys, settings.Permissions, launch, !settings.Ui.FirstRunCompleted);
+            exitCode = RunApplication(host.Services, logger, startTimestamp, settings, launch, !settings.Ui.FirstRunCompleted);
         }
         catch (Exception exception)
         {
@@ -86,7 +86,7 @@ internal static class AppBootstrapper
     }
 
     private static int RunApplication(
-        IServiceProvider services, ILogger logger, long startTimestamp, HotkeySettings shortcuts, PermissionSettings permissions,
+        IServiceProvider services, ILogger logger, long startTimestamp, AppSettings settings,
         LaunchOptions launch, bool showOnboarding)
     {
         // Windows are created after the application, so they can use its resources.
@@ -104,6 +104,7 @@ internal static class AppBootstrapper
         var window = services.GetRequiredService<AssistantWindow>();
         var controller = services.GetRequiredService<AssistantWindowStateController>();
         var history = services.GetRequiredService<HistoryWindowController>();
+        var events = services.GetRequiredService<IAppEventBus>();
 
         // The Assistant's window is the application's: closing it ends the application, even while the History window
         // is hidden, as it only ever is until then.
@@ -117,7 +118,7 @@ internal static class AppBootstrapper
 
         // The shortcut opens the Assistant, and pressed again puts it away.
         using var hotkeyBinding = new OverlayHotkeyBinding(
-            window, services.GetRequiredService<GlobalHotkeyService>(), shortcuts.SearchOrAsk, () =>
+            window, services.GetRequiredService<GlobalHotkeyService>(), settings, events, saved => saved.Hotkeys.SearchOrAsk, () =>
             {
                 controller.Toggle();
                 updates.CheckIfDue();
@@ -127,20 +128,21 @@ internal static class AppBootstrapper
         var visual = services.GetRequiredService<VisualIntelligenceController>();
         using var visualBinding = new OverlayHotkeyBinding(
             window, services.GetRequiredKeyedService<GlobalHotkeyService>(ServiceCollectionExtensions.VisualIntelligenceHotkey),
-            shortcuts.VisualIntelligence, () => _ = visual.InvokeAsync());
+            settings, events, saved => saved.Hotkeys.VisualIntelligence, () => _ = visual.InvokeAsync());
         // The third shortcut reads the text selected in the application in front, before the Assistant takes the keyboard, and opens the Ask
         // panel with it and its quick actions.
         var selected = services.GetRequiredService<AskSelectionController>();
         using var selectedBinding = new OverlayHotkeyBinding(
             window, services.GetRequiredKeyedService<GlobalHotkeyService>(ServiceCollectionExtensions.SelectedTextHotkey),
-            shortcuts.SelectedTextActions, () => _ = selected.InvokeAsync());
+            settings, events, saved => saved.Hotkeys.SelectedTextActions, () => _ = selected.InvokeAsync());
 
         // The fourth shortcut is the explicit fallback for apps that do not share their selection: it presses Copy in the app in front and puts
         // the clipboard back. It is registered with Windows only while the user has allowed it (Settings > Permissions, off by default), so
         // while it is off the keys stay with the other applications, and it never runs on its own.
         using var copyBinding = new OverlayHotkeyBinding(
             window, services.GetRequiredKeyedService<GlobalHotkeyService>(ServiceCollectionExtensions.SelectedTextByCopyHotkey),
-            permissions.SelectedTextByCopy ? shortcuts.SelectedTextByCopy : null, () => _ = selected.InvokeByCopyAsync());
+            settings, events, saved => saved.Permissions.SelectedTextByCopy ? saved.Hotkeys.SelectedTextByCopy : null,
+            () => _ = selected.InvokeByCopyAsync());
 
         // The Assistant's icon in the notification area (PROJECT_SPEC §4.9): its menu opens the Assistant, a new conversation or the Settings, pauses
         // the local AI and exits. It is the Assistant's way in while nothing is on screen, such as after a start with Windows.

@@ -15,7 +15,7 @@
        application icon is shown. -->
   <ItemGroup>
     <Content Include="..\Assistant.ExplorerExtension\Assets\Assistant.ico" Link="Assistant.ico" CopyToOutputDirectory="PreserveNewest" />
-    <!-- File Explorer's menu mark, white and black, beside Assistant.ExplorerExtension.exe (which registers whichever fits the theme). -->
+    <!-- The Kiri icon for both Explorer menu themes; the SVG's white tile keeps it legible on either background. -->
     <Content Include="..\Assistant.ExplorerExtension\Assets\AskAssistant.dark.ico" Link="AskAssistant.dark.ico" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="..\Assistant.ExplorerExtension\Assets\AskAssistant.light.ico" Link="AskAssistant.light.ico" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="..\Assistant.ExplorerExtension\Assets\PackageLogo.png" Link="PackageLogo.png" CopyToOutputDirectory="PreserveNewest" />
@@ -23,7 +23,7 @@
     <Content Include="Assets\asr-speed-test.wav" Link="assets\asr-speed-test.wav" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
-  <!-- The Assistant's mark (white), drawn on the Visual Intelligence Ask chip. -->
+  <!-- The Kiri icon, drawn on the Visual Intelligence Ask chip. -->
   <ItemGroup>
     <Resource Include="Assets\AskAssistantMark.png" />
     <Resource Include="Onboarding\Icons\*.png" />

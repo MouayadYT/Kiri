@@ -1,11 +1,10 @@
 <h1>
   <img
-    src="docs/images/kiri-logo.svg"
-    alt="Kiri logo"
-    width="72"
-    align="center"
+    src="docs/images/kiri-heading.svg"
+    alt="Kiri"
+    width="160"
+    height="72"
   />
-  Kiri
 </h1>
 
 **Kiri** is a personal assistant for Windows 11, in the spirit of Siri and Apple Intelligence. Press **Alt+A** for a floating **Search or Ask** bar that finds your apps and files, does sums as you type, and answers questions with an AI model that runs **on your own PC**. No account, no server and no subscription. What you ask never leaves your PC unless you turn that on.

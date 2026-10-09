@@ -24,6 +24,9 @@ public sealed record FakeEngineScenario
     /// <summary>The first launch that has the <see cref="StartupFailure"/>; earlier ones start.</summary>
     public int StartupFailureFromLaunch { get; init; } = 1;
 
+    /// <summary>The last launch that fails; later launches recover, as after a transient driver failure.</summary>
+    public int StartupFailureThroughLaunch { get; init; } = int.MaxValue;
+
     /// <summary>Whether the <see cref="StartupFailure"/> happens only when the launch names devices to offload to, as a driver that cannot run the model does.</summary>
     public bool StartupFailureOnDevicesOnly { get; init; }
 

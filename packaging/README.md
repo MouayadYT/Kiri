@@ -1,5 +1,14 @@
 # Packaging the Assistant
 
+## Brand assets
+
+`docs/images/kiri-logo.svg` is the canonical Kiri artwork. To regenerate the Windows ICOs, browser icons, capture mark,
+README PNG, and installer wizard images, run `node packaging/Generate-BrandAssets.cjs` with the `sharp` package available
+to Node.js (installed locally or via `NODE_PATH`). Generated assets are checked in; ordinary builds do not need Node.js.
+Both Explorer theme variants retain the SVG's white tile. The installer, shortcuts, and tray use the same `Assistant.ico`.
+
+## Building
+
 Steps 122-123 (PROJECT_SPEC §5.7, §3.5). This folder makes a **package**: one folder (and an optional zip) that installs the Assistant on a Windows 11 PC for
 one user, with its models and voices, without a .NET install, LM Studio, Ollama or any speech server.
 

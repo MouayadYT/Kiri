@@ -168,9 +168,10 @@ internal sealed class ModelProcessManager : IModelProcessManager, IAsyncDisposab
                 catch (ModelProcessException failed) when (launch.Devices is { Count: > 0 }
                     && failed.Failure is ModelProcessFailure.ModelLoadFailed or ModelProcessFailure.ExitedDuringStart)
                 {
-                    // A graphics driver that cannot run the model must not keep it from running at all.
-                    EngineDeviceLog.FallingBackToCpu(_logger, failed.Failure);
-                    launch = launch with { Devices = [] };
+                    // A driver can fail during its first initialization. Retry once on the same devices;
+                    // silently pinning this session to CPU would ignore the user's GPU choice until unload.
+                    EngineDeviceLog.RetryingGpu(_logger, failed.Failure);
+                    await Task.Delay(TimeSpan.FromSeconds(1), _timeProvider, starting.Token).ConfigureAwait(false);
                     engine = await LaunchAsync(launch, starting.Token).ConfigureAwait(false);
                 }
             }
@@ -259,6 +260,13 @@ internal sealed class ModelProcessManager : IModelProcessManager, IAsyncDisposab
         }
 
         var devices = await _deviceProbe.ListAsync(runtime, cancellationToken).ConfigureAwait(false);
+        if (devices.Count == 0)
+        {
+            // On a fresh install the graphics backend can still be initializing. Do not make the
+            // session's automatic choice from a single empty/failed probe.
+            await Task.Delay(TimeSpan.FromSeconds(1), _timeProvider, cancellationToken).ConfigureAwait(false);
+            devices = await _deviceProbe.ListAsync(runtime, cancellationToken).ConfigureAwait(false);
+        }
         var required = EngineDevices.RequiredBytes(SizeOf(launch.ModelPath), SizeOf(launch.ProjectorPath));
         if (EngineDevices.Choose(devices, required) is not { } chosen)
         {

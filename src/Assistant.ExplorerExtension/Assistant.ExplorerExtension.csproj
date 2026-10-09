@@ -15,7 +15,7 @@
     <ApplicationIcon>Assets\Assistant.ico</ApplicationIcon>
   </PropertyGroup>
 
-  <!-- The mark File Explorer's menu shows: white for a dark menu, black for a light one (ExplorerMenuRegistration picks by Windows' theme).
+  <!-- The Kiri icon for both menu themes, kept under the existing names for registered Explorer entries.
        They ship beside the entry point, and with the app that references it. -->
   <ItemGroup>
     <Content Include="Assets\AskAssistant.dark.ico" Link="AskAssistant.dark.ico" CopyToOutputDirectory="PreserveNewest" />

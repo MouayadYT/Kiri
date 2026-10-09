@@ -232,9 +232,9 @@ public sealed partial class PromptInputControlTests
             }
 
             // The three shortcuts and the hardware preset say when they take effect.
-            Assert.Equal(SettingStatus.AtNextStart, Ancestor<SettingsRow>(SettingsControl(window, kit, SettingsSection.Hotkeys, "Search or Ask shortcut")).Status);
-            Assert.Equal(SettingStatus.AtNextStart, Ancestor<SettingsRow>(SettingsControl(window, kit, SettingsSection.Hotkeys, "Visual Intelligence shortcut")).Status);
-            Assert.Equal(SettingStatus.AtNextStart, Ancestor<SettingsRow>(SettingsControl(window, kit, SettingsSection.Hotkeys, "Selected text shortcut")).Status);
+            Assert.Equal(SettingStatus.Available, Ancestor<SettingsRow>(SettingsControl(window, kit, SettingsSection.Hotkeys, "Search or Ask shortcut")).Status);
+            Assert.Equal(SettingStatus.Available, Ancestor<SettingsRow>(SettingsControl(window, kit, SettingsSection.Hotkeys, "Visual Intelligence shortcut")).Status);
+            Assert.Equal(SettingStatus.Available, Ancestor<SettingsRow>(SettingsControl(window, kit, SettingsSection.Hotkeys, "Selected text shortcut")).Status);
 
         }
         finally

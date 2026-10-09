@@ -2,6 +2,7 @@ using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Interop;
 using System.Windows.Threading;
+using Assistant.Core.Events;
 using Assistant.Core.Settings;
 using Assistant.UI.Controls;
 using Assistant.UI.ViewModels;
@@ -15,6 +16,71 @@ namespace Assistant.UI.Tests;
 
 public sealed partial class PromptInputControlTests
 {
+    [Fact]
+    public void SavedHotkeysReplaceNativeRegistrationsWithoutRestarting() => RunSta(() => WithTheme(() =>
+    {
+        var window = CreateAssistant().Window;
+        var bus = new AppEventBus(NullLogger<AppEventBus>.Instance);
+        var first = new Hotkey(HotkeyModifiers.Control | HotkeyModifiers.Alt | HotkeyModifiers.Shift, "F21");
+        var second = first with { Key = "F22" };
+        var saved = new AppSettings { Hotkeys = new HotkeySettings { SearchOrAsk = first } };
+        var invocations = 0;
+        using var hotkeys = new GlobalHotkeyService(NullLogger<GlobalHotkeyService>.Instance);
+        using var binding = new OverlayHotkeyBinding(window, hotkeys, saved, bus,
+            settings => settings.Hotkeys.SearchOrAsk, () => invocations++);
+        using var competitorWindow = new HwndSource(new HwndSourceParameters("Live hotkey test") { WindowStyle = 0 });
+        using var competitor = new GlobalHotkeyService(NullLogger<GlobalHotkeyService>.Instance);
+        try
+        {
+            var handle = new WindowInteropHelper(window).EnsureHandle();
+            Assert.False(competitor.Register(competitorWindow.Handle, first));
+            saved = saved with { Hotkeys = saved.Hotkeys with { SearchOrAsk = second } };
+            // A worker may publish settings; pump the dispatcher before checking the native registration.
+            Task.Run(() => bus.PublishAsync(new SettingsSaved(saved))).GetAwaiter().GetResult();
+            WaitUntil(() => competitor.Register(competitorWindow.Handle, first));
+            Assert.False(hotkeys.ProcessWindowMessage(handle, 0x0312, 0x5341, (0x84 << 16) | 0x7));
+            Assert.True(hotkeys.ProcessWindowMessage(handle, 0x0312, 0x5341, (0x85 << 16) | 0x7));
+            Assert.Equal(1, invocations);
+            Assert.False(competitor.Register(competitorWindow.Handle, second));
+
+            saved = saved with { Hotkeys = saved.Hotkeys with { SearchOrAsk = null } };
+            bus.PublishAsync(new SettingsSaved(saved)).GetAwaiter().GetResult();
+            Assert.False(hotkeys.IsRegistered);
+            Assert.True(competitor.Register(competitorWindow.Handle, second));
+            competitor.Unregister();
+            binding.Dispose();
+            bus.PublishAsync(new SettingsSaved(saved with { Hotkeys = saved.Hotkeys with { SearchOrAsk = first } })).GetAwaiter().GetResult();
+            Assert.False(hotkeys.IsRegistered);
+        }
+        finally { window.Close(); }
+    }));
+
+    [Fact]
+    public void CopyHotkeyFollowsPermissionAndChangesBeforeTheWindowHasAHandle() => RunSta(() => WithTheme(() =>
+    {
+        var window = CreateAssistant().Window;
+        var bus = new AppEventBus(NullLogger<AppEventBus>.Instance);
+        var shortcut = new Hotkey(HotkeyModifiers.Control | HotkeyModifiers.Alt | HotkeyModifiers.Shift, "F20");
+        var saved = new AppSettings { Hotkeys = new HotkeySettings { SelectedTextByCopy = shortcut } };
+        using var hotkeys = new GlobalHotkeyService(NullLogger<GlobalHotkeyService>.Instance, GlobalHotkeyService.SelectedTextByCopyHotkeyId);
+        using var binding = new OverlayHotkeyBinding(window, hotkeys, saved, bus,
+            settings => settings.Permissions.SelectedTextByCopy ? settings.Hotkeys.SelectedTextByCopy : null, () => { });
+        try
+        {
+            saved = saved with { Permissions = saved.Permissions with { SelectedTextByCopy = true } };
+            bus.PublishAsync(new SettingsSaved(saved)).GetAwaiter().GetResult();
+            new WindowInteropHelper(window).EnsureHandle();
+            Assert.True(hotkeys.IsRegistered);
+            saved = saved with { Permissions = saved.Permissions with { SelectedTextByCopy = false } };
+            bus.PublishAsync(new SettingsSaved(saved)).GetAwaiter().GetResult();
+            Assert.False(hotkeys.IsRegistered);
+            saved = saved with { Permissions = saved.Permissions with { SelectedTextByCopy = true } };
+            bus.PublishAsync(new SettingsSaved(saved)).GetAwaiter().GetResult();
+            Assert.True(hotkeys.IsRegistered);
+        }
+        finally { window.Close(); }
+    }));
+
     [Fact]
     public void NativeHotkeyReopensAndFocusesSameOverlayAndReleasesOnClose() => RunSta(() =>
     {
