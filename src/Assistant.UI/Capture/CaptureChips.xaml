@@ -1,0 +1,60 @@
+<UserControl x:Class="Assistant.UI.Capture.CaptureChips" x:ClassModifier="internal"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="clr-namespace:Assistant.UI.Controls"
+             Focusable="False" IsTabStop="False">
+
+    <!-- What the user can do with the selection, in a stack beside it (PROJECT_SPEC §4.6), laid out from the Visual Intelligence
+         reference: a wide chip to ask the Assistant, with a caret waiting in it, and smaller ones under it, all glass over the
+         dimmed screen (Themes/Controls/Capture.xaml). Ask Assistant is local; Image Search is marked with a globe as the one that
+         goes out to the web, and stays dimmed until it can be used. Every chip is a button for assistive technology. -->
+    <StackPanel x:Name="Stack" Orientation="Vertical" HorizontalAlignment="Left">
+
+        <controls:FrostedPill x:Name="AskChip" Width="{StaticResource Capture.AskWidth}" Height="{StaticResource Capture.AskHeight}"
+                              HorizontalAlignment="Left" Focusable="False"
+                              HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch"
+                              AutomationProperties.Name="Ask Assistant about the selection">
+            <Grid>
+                <!-- The mark opens the conversation with the picture attached, with or without a question typed. -->
+                <Border x:Name="AskMark" Width="24" HorizontalAlignment="Left" Background="Transparent" Cursor="Hand"
+                        ToolTip="Open in a conversation" AutomationProperties.Name="Open in a conversation">
+                    <Image Source="pack://application:,,,/Assistant.UI;component/Assets/AskAssistantMark.png" Width="10" Height="10"
+                           HorizontalAlignment="Left" VerticalAlignment="Center" Margin="{StaticResource Capture.AskIconMargin}"
+                           RenderOptions.BitmapScalingMode="HighQuality" />
+                </Border>
+                <Grid Margin="{StaticResource Capture.AskTextMargin}" VerticalAlignment="Center">
+                    <TextBlock x:Name="AskPlaceholder" Text="Ask Assistant" Style="{StaticResource Capture.ChipText}"
+                               Margin="2.5,0,0,0" IsHitTestVisible="False" />
+                    <TextBox x:Name="AskBox" Background="Transparent" BorderThickness="0" Padding="0" Margin="0"
+                             FontFamily="{StaticResource Font.Text}" FontSize="{StaticResource FontSize.CaptureChip}"
+                             FontWeight="SemiBold" Foreground="{StaticResource Brush.Capture.ChipText}"
+                             CaretBrush="{StaticResource Brush.Capture.Caret}" SelectionBrush="{StaticResource Brush.Capture.Caret}"
+                             VerticalAlignment="Center" VerticalContentAlignment="Center" MaxLength="500"
+                             AcceptsReturn="False" AutomationProperties.Name="Ask Assistant"
+                             FocusVisualStyle="{x:Null}" />
+                </Grid>
+            </Grid>
+        </controls:FrostedPill>
+
+        <Button x:Name="ImageSearchButton" Style="{StaticResource Capture.ChipButton}" HorizontalAlignment="Left"
+                Margin="0,4.5,0,0" AutomationProperties.Name="Image Search">
+            <StackPanel Orientation="Horizontal">
+                <Path Data="{StaticResource Icon.ImageSearch}" Style="{StaticResource Capture.ChipGlyph}" Margin="0,0,6.5,0" />
+                <TextBlock Text="Image Search" Style="{StaticResource Capture.ChipText}" />
+                <!-- The globe says that this one leaves the PC. -->
+                <Path x:Name="OnlineMark" Data="{StaticResource Icon.Globe}" Style="{StaticResource Capture.ChipGlyph}"
+                      Margin="5,0,0,0" Opacity="0.75" />
+            </StackPanel>
+        </Button>
+
+        <Button x:Name="CopyButton" Style="{StaticResource Capture.ChipButton}" HorizontalAlignment="Left"
+                Margin="0,4.5,0,0" AutomationProperties.Name="Copy">
+            <StackPanel Orientation="Horizontal">
+                <Viewbox Width="6" Height="7.5" Margin="1.5,0,7.5,0" VerticalAlignment="Center">
+                    <Path Data="{StaticResource Icon.Copy}" Fill="{StaticResource Brush.Capture.ChipText}" />
+                </Viewbox>
+                <TextBlock Text="Copy" Style="{StaticResource Capture.ChipText}" />
+            </StackPanel>
+        </Button>
+    </StackPanel>
+</UserControl>

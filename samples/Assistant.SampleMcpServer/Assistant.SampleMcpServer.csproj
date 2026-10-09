@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- "Sample Notes": a made-up MCP server for trying the installation of integrations (PROJECT_SPEC section 4.8, step 108). It touches no file and opens no
+       connection. It ships beside the app, and `demo integration` packs it into a bundle that is served from this PC and installed through the real
+       approval panel; nothing else uses it. -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <!-- This program is never run from the app's folder: the demo packs its own four files (exe, dll, runtimeconfig, deps) into a bundle and it runs
+       from where that is installed, with nothing beside it. So it must need no library but the runtime's own, and does not take the System.Text.Json
+       package every program that runs in the app's folder shares (Directory.Build.props). -->
+  <ItemGroup>
+    <PackageReference Remove="System.Text.Json" />
+  </ItemGroup>
+
+</Project>

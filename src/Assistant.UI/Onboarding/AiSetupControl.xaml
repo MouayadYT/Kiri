@@ -1,0 +1,40 @@
+<UserControl x:Class="Assistant.UI.Onboarding.AiSetupControl" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <UserControl.Resources><ResourceDictionary><ResourceDictionary.MergedDictionaries><ResourceDictionary Source="SetupStyles.xaml"/></ResourceDictionary.MergedDictionaries></ResourceDictionary></UserControl.Resources>
+    <StackPanel>
+        <TextBlock Style="{StaticResource SetupMuted}" Text="{Binding HardwareSummary}" Margin="0,0,0,14"/>
+        <ListBox ItemsSource="{Binding AiModels}" SelectedItem="{Binding SelectedAi}" Style="{StaticResource SetupModelList}" ItemContainerStyle="{StaticResource SetupModelItem}" IsEnabled="{Binding IsIdle}" AutomationProperties.Name="AI model">
+            <ListBox.ItemTemplate><DataTemplate>
+                <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                    <StackPanel Margin="0,0,16,0">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Style="{StaticResource SetupText}" Text="{Binding Name}" FontWeight="SemiBold" FontSize="16"/>
+                            <Border Background="#332F6BD5" CornerRadius="5" Padding="7,3" Margin="10,0,0,0" Visibility="{Binding Recommended, Converter={StaticResource Show}}"><TextBlock Text="RECOMMENDED" Foreground="#DCE8FB" FontSize="9" FontWeight="SemiBold"/></Border>
+                        </StackPanel>
+                        <TextBlock Style="{StaticResource SetupMuted}" Text="{Binding Detail}" Margin="0,5,0,7"/>
+                        <TextBlock Style="{StaticResource SetupMuted}"><Run Text="{Binding Ram, Mode=OneWay}"/><Run Text=" · "/><Run Text="{Binding Size, Mode=OneWay}"/></TextBlock>
+                        <!-- A model that was downloaded before its vision projector was offered says what a download now adds. -->
+                        <TextBlock Style="{StaticResource SetupText}" Text="{Binding State}" TextWrapping="Wrap" Margin="0,7,0,0" Visibility="{Binding NeedsUpdate, Converter={StaticResource Show}}"/>
+                    </StackPanel>
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Button Content="Download" VerticalAlignment="Center" Command="{Binding DataContext.DownloadAiCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}">
+                        <Button.Style><Style TargetType="Button" BasedOn="{StaticResource SetupButton}"><Style.Triggers><DataTrigger Binding="{Binding IsInstalled}" Value="True"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></Button.Style>
+                    </Button>
+                    <Button Content="Use model" Style="{StaticResource SetupButton}" VerticalAlignment="Center" Command="{Binding DataContext.UseAiCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}" Visibility="{Binding IsInstalled, Converter={StaticResource Show}}"/>
+                    <Button Content="Delete" Style="{StaticResource SetupButton}" Command="{Binding DataContext.DeleteCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}" Visibility="{Binding CanDelete, Converter={StaticResource Show}}" Margin="8,0,0,0"/>
+                    </StackPanel>
+                </Grid>
+            </DataTemplate></ListBox.ItemTemplate>
+        </ListBox>
+        <TextBlock Style="{StaticResource SetupMuted}" Text="RAM is calculated for the 8,000-token context window. When chatting with a file it goes up to 32K, then drops back afterwards to save VRAM." TextWrapping="Wrap" Margin="0,0,0,18"/>
+        <Grid IsEnabled="{Binding IsIdle}"><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+            <StackPanel><TextBlock Style="{StaticResource SetupText}" Text="Run the AI on" Margin="0,0,0,8"/><ComboBox ItemsSource="{Binding AiDevices}" SelectedItem="{Binding AiDevice}" DisplayMemberPath="Name" Style="{StaticResource SettingsComboBox}" Height="36" AutomationProperties.Name="AI compute device"/></StackPanel>
+            <Button Grid.Column="1" Content="Choose custom GGUF…" Command="{Binding BrowseCommand}" Style="{StaticResource SetupButton}" VerticalAlignment="Bottom" Margin="14,0,0,0"/>
+        </Grid>
+        <TextBlock Style="{StaticResource SetupMuted}" Text="{Binding CustomModelPath}" Margin="0,8,0,0" Visibility="{Binding HasCustomModel, Converter={StaticResource Show}}"/>
+        <!-- Reading pictures takes memory of its own while the model is loaded: the user may have that part loaded only for a question with a picture. -->
+        <StackPanel Margin="0,20,0,0" Visibility="{Binding OffersVisionOnDemand, Converter={StaticResource Show}}">
+            <CheckBox x:Name="VisionOnDemandQuestion" Content="Load vision only when needed" IsChecked="{Binding VisionOnDemand}" Style="{StaticResource SetupCheck}" FontSize="15" IsEnabled="{Binding IsIdle}" AutomationProperties.Name="Load vision only when needed"/>
+            <TextBlock Style="{StaticResource SetupMuted}" Text="{Binding VisionOnDemandDetail}" TextWrapping="Wrap" Margin="0,8,0,0"/>
+        </StackPanel>
+    </StackPanel>
+</UserControl>

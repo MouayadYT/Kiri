@@ -1,0 +1,1399 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:controls="clr-namespace:Assistant.UI.Controls"
+                    xmlns:settings="clr-namespace:Assistant.UI.Settings"
+                    xmlns:setup="clr-namespace:Assistant.UI.Onboarding">
+
+    <!-- The pages of the Settings window (Views/SettingsWindow), one template for the view model of each section. Every
+         control is bound to the real settings through its page. A control whose feature is a later step is a
+         SettingsRow with Status="ComingLater": it shows what is saved, cannot be changed, and says why. -->
+    <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="../Tokens/Typography.xaml" />
+        <ResourceDictionary Source="../Tokens/Strokes.xaml" />
+        <ResourceDictionary Source="../Tokens/Surfaces.xaml" />
+        <ResourceDictionary Source="Settings.xaml" />
+    </ResourceDictionary.MergedDictionaries>
+
+    <SolidColorBrush x:Key="Brush.Settings.Good" Color="#5FD07A" />
+
+    <!-- A problem with the keys just pressed, in the row's footer. -->
+    <DataTemplate DataType="{x:Type settings:HotkeyEditor}">
+        <TextBlock Text="{Binding Problem}" Margin="0,8,0,0" Foreground="{StaticResource Brush.Settings.Error}"
+                   Style="{StaticResource Text.SettingsDescription}"
+                   Visibility="{Binding HasProblem, Converter={StaticResource Settings.ShowWhenTrue}}"
+                   AutomationProperties.LiveSetting="Assertive" />
+    </DataTemplate>
+
+    <!-- A shortcut's keys as a button that records new ones, with the buttons that put it back or turn it off. -->
+    <DataTemplate x:Key="SettingsHotkeyKeys" DataType="{x:Type settings:HotkeyEditor}">
+        <StackPanel Orientation="Horizontal">
+            <Button Style="{StaticResource SettingsKeycap}" Command="{Binding RecordCommand}"
+                    controls:HotkeyCapture.Editor="{Binding}"
+                    AutomationProperties.Name="{Binding Title, StringFormat={}{0} shortcut}">
+                <TextBlock>
+                    <TextBlock.Style>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="Text" Value="{Binding DisplayText}" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsRecording}" Value="True">
+                                    <Setter Property="Text" Value="Press the new shortcut…" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+                </TextBlock>
+            </Button>
+            <Button Style="{StaticResource SettingsButton}" Content="Reset" Margin="8,0,0,0" Command="{Binding ResetCommand}"
+                    AutomationProperties.Name="{Binding Title, StringFormat=Reset the {0} shortcut}" />
+            <Button Style="{StaticResource SettingsButton}" Content="Off" MinWidth="56" Margin="8,0,0,0"
+                    Command="{Binding TurnOffCommand}"
+                    AutomationProperties.Name="{Binding Title, StringFormat=Turn off the {0} shortcut}" />
+        </StackPanel>
+    </DataTemplate>
+
+    <!-- A link that looks like a link: text with an underline, for what opens something small. -->
+    <Style x:Key="SettingsLinkButton" TargetType="Button">
+        <Setter Property="Foreground" Value="{StaticResource Brush.Settings.Description}" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Focusable" Value="True" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <TextBlock x:Name="Words" Text="{TemplateBinding Content}" Foreground="{TemplateBinding Foreground}" FontFamily="{StaticResource Font.Text}"
+                               FontSize="12" TextDecorations="Underline" />
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Words" Property="Foreground" Value="{StaticResource Brush.Text.Primary}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- General. -->
+    <DataTemplate DataType="{x:Type settings:GeneralPage}">
+        <StackPanel>
+            <HeaderedContentControl Header="First-launch setup" Style="{StaticResource SettingsGroup}">
+                <controls:SettingsRow Header="Set up Kiri again">
+                    <Button Content="Open setup" Style="{StaticResource SettingsButton}" Command="{Binding DataContext.ShowOnboardingCommand, RelativeSource={RelativeSource AncestorType=Window}}" />
+                </controls:SettingsRow>
+            </HeaderedContentControl>
+            <HeaderedContentControl Header="Startup" Style="{StaticResource SettingsGroup}">
+                <StackPanel>
+                    <controls:SettingsRow Header="Start Assistant on boot">
+                        <CheckBox Style="{StaticResource SettingsToggle}" IsChecked="{Binding StartAtSignIn}"
+                                  AutomationProperties.Name="Start Assistant on boot" />
+                    </controls:SettingsRow>
+                    <TextBlock Text="{Binding StartAtSignInNote}" Margin="18,0,18,14" TextWrapping="Wrap"
+                               Foreground="{StaticResource Brush.Settings.Error}" Style="{StaticResource Text.SettingsDescription}"
+                               Visibility="{Binding HasStartAtSignInNote, Converter={StaticResource Settings.ShowWhenTrue}}"
+                               AutomationProperties.LiveSetting="Polite" />
+                </StackPanel>
+            </HeaderedContentControl>
+            <HeaderedContentControl Header="Game mode" Style="{StaticResource SettingsGroup}">
+                <StackPanel>
+                    <controls:SettingsRow Header="Pause AI when a game is running">
+                        <CheckBox Style="{StaticResource SettingsToggle}" IsChecked="{Binding GameModeEnabled}"
+                                  AutomationProperties.Name="Pause AI when a game is running" />
+                    </controls:SettingsRow>
+                    <Rectangle Style="{StaticResource SettingsSeparator}" />
+                    <controls:SettingsRow Header="Pause AI when a creative app is running">
+                        <controls:SettingsRow.Footer>
+                            <StackPanel Margin="0,6,0,0">
+                                <Button x:Name="CreativeListLink" Style="{StaticResource SettingsLinkButton}" Content="Click here to view the full list" HorizontalAlignment="Left"
+                                        Command="{Binding OpenCreativeListCommand}" AutomationProperties.Name="View the full list of creative apps" />
+                                <!-- The list opens under the link, over the page, and goes with a click anywhere else. -->
+                                <Popup IsOpen="{Binding IsCreativeListOpen, Mode=TwoWay}" StaysOpen="False" AllowsTransparency="True" Placement="Bottom"
+                                       PlacementTarget="{Binding ElementName=CreativeListLink}" HorizontalOffset="0" VerticalOffset="6" PopupAnimation="Fade">
+                                    <Border Background="{StaticResource Brush.Surface.MenuOpaque}" BorderBrush="{StaticResource Brush.Stroke.ControlRim}" BorderThickness="1"
+                                            CornerRadius="12" Padding="16,12" MaxWidth="360" MaxHeight="300" AutomationProperties.Name="Creative apps">
+                                        <ScrollViewer VerticalScrollBarVisibility="Auto" Focusable="False">
+                                            <ItemsControl ItemsSource="{Binding CreativeAppNames}" IsTabStop="False" Focusable="False">
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <TextBlock Text="{Binding}" Margin="0,3" TextWrapping="Wrap" Style="{StaticResource Text.SettingsHeader}" FontWeight="Normal" />
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+                                        </ScrollViewer>
+                                    </Border>
+                                </Popup>
+                            </StackPanel>
+                        </controls:SettingsRow.Footer>
+                        <CheckBox Style="{StaticResource SettingsToggle}" IsChecked="{Binding CreativeAppsEnabled}"
+                                  AutomationProperties.Name="Pause AI when a creative app is running" />
+                    </controls:SettingsRow>
+                    <TextBlock Text="{Binding GameModeNote}" Margin="18,0,18,14" TextWrapping="Wrap"
+                               Style="{StaticResource Text.SettingsDescription}"
+                               Visibility="{Binding HasGameModeNote, Converter={StaticResource Settings.ShowWhenTrue}}"
+                               AutomationProperties.LiveSetting="Polite" />
+                    <StackPanel Visibility="{Binding ShowsCloseHandy, Converter={StaticResource Settings.ShowWhenTrue}}">
+                        <Rectangle Style="{StaticResource SettingsSeparator}" />
+                        <controls:SettingsRow Header="Close Handy with Kiri">
+                            <CheckBox Style="{StaticResource SettingsToggle}" IsChecked="{Binding CloseHandyForGames}"
+                                      AutomationProperties.Name="Close Handy with Kiri" />
+                        </controls:SettingsRow>
+                    </StackPanel>
+                </StackPanel>
+            </HeaderedContentControl>
+            <HeaderedContentControl Header="Search or Ask bar" Style="{StaticResource SettingsGroup}">
+                <StackPanel>
+                    <controls:SettingsRow Header="Results in each group">
+                        <ComboBox Style="{StaticResource SettingsComboBox}" MinWidth="90"
+                                  ItemsSource="{Binding ResultsPerGroupChoices}" SelectedItem="{Binding ResultsPerGroup}"
+                                  AutomationProperties.Name="Results in each group" />
+                    </controls:SettingsRow>
+                    <Rectangle Style="{StaticResource SettingsSeparator}" />
+                    <controls:SettingsRow Header="Search files by default">
+                        <CheckBox Style="{StaticResource SettingsToggle}" IsChecked="{Binding FilesByDefault}"
+                                  AutomationProperties.Name="Search files by default" />
+                    </controls:SettingsRow>
+                </StackPanel>
+            </HeaderedContentControl>
+        </StackPanel>
+    </DataTemplate>
+
+    <!-- A model profile: which one it is, what it is, whether it is installed and where its files go. -->
+    <DataTemplate DataType="{x:Type settings:ModelProfileItem}">
+        <Grid Margin="18,14,18,14">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <Grid Width="18" Height="18" VerticalAlignment="Top" Margin="0,1,0,0">
+                <Ellipse Stroke="{StaticResource Brush.Text.HistorySection}" StrokeThickness="1.5" />
+                <Ellipse x:Name="Dot" Margin="4.5" Fill="{StaticResource Brush.Settings.ToggleOn}" Visibility="Collapsed" />
+            </Grid>
+            <StackPanel Grid.Column="1" Margin="14,0,0,0">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="{Binding DisplayName}" Style="{StaticResource Text.SettingsHeader}" />
+                    <Border Margin="10,1,0,0" Padding="8,2,8,3" Background="{StaticResource Brush.Surface.Bubble}" CornerRadius="9"
+                            VerticalAlignment="Center"
+                            Visibility="{Binding IsDefault, Converter={StaticResource Settings.ShowWhenTrue}}">
+                        <TextBlock Text="Default" FontFamily="{StaticResource Font.Text}" FontSize="11" FontWeight="SemiBold"
+                                   Foreground="{StaticResource Brush.Settings.Description}" />
+                    </Border>
+                    <Border Margin="8,1,0,0" Padding="8,2,8,3" Background="{StaticResource Brush.Surface.Bubble}" CornerRadius="9"
+                            VerticalAlignment="Center"
+                            Visibility="{Binding IsRecommended, Converter={StaticResource Settings.ShowWhenTrue}}">
+                        <TextBlock Text="Recommended for this PC" FontFamily="{StaticResource Font.Text}" FontSize="11" FontWeight="SemiBold"
+                                   Foreground="{StaticResource Brush.Settings.Description}" />
+                    </Border>
+                </StackPanel>
+                <TextBlock Text="{Binding Summary}" Style="{StaticResource Text.SettingsDescription}" Margin="0,2,0,0" />
+                <TextBlock x:Name="Status" Text="{Binding Status}" Style="{StaticResource Text.SettingsDescription}"
+                           Margin="0,8,0,0" />
+                <TextBlock Text="{Binding Location}" Style="{StaticResource Text.SettingsPath}" Margin="0,3,0,0" />
+                <Button Style="{StaticResource SettingsButton}" Content="Check files" HorizontalAlignment="Left" Margin="0,10,0,0"
+                        Command="{Binding CheckCommand}"
+                        Visibility="{Binding CanCheck, Converter={StaticResource Settings.ShowWhenTrue}}"
+                        AutomationProperties.Name="{Binding DisplayName, StringFormat=Check the files of the {0} profile}" />
+            </StackPanel>
+        </Grid>
+        <DataTemplate.Triggers>
+            <DataTrigger Binding="{Binding IsSelected, RelativeSource={RelativeSource AncestorType=ListBoxItem}}" Value="True">
+                <Setter TargetName="Dot" Property="Visibility" Value="Visible" />
+            </DataTrigger>
+            <DataTrigger Binding="{Binding IsInstalled}" Value="True">
+                <Setter TargetName="Status" Property="Foreground" Value="{StaticResource Brush.Settings.Good}" />
+            </DataTrigger>
+        </DataTemplate.Triggers>
+    </DataTemplate>
+
+    <!-- Model: status, profiles and where they are, the hardware preset, and how much context the model is given. -->
+    <DataTemplate DataType="{x:Type settings:ModelPage}">
+        <StackPanel>
+            <HeaderedContentControl Header="Model downloads">
+                <HeaderedContentControl.Style><Style TargetType="HeaderedContentControl" BasedOn="{StaticResource SettingsGroup}"><Style.Triggers><DataTrigger Binding="{Binding DataContext.Setup, RelativeSource={RelativeSource AncestorType=Window}}" Value="{x:Null}"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></HeaderedContentControl.Style>
+                <StackPanel Margin="18"><setup:AiSetupControl DataContext="{Binding DataContext.Setup, RelativeSource={RelativeSource AncestorType=Window}}"/>
+                    <setup:LibraryControl DataContext="{Binding DataContext.Setup, RelativeSource={RelativeSource AncestorType=Window}}"/>
+                </StackPanel>
+            </HeaderedContentControl>
+            <HeaderedContentControl Header="Status" Style="{StaticResource SettingsGroup}">
+                <controls:SettingsRow Header="Local model" Description="{Binding StatusText}">
+                    <controls:SettingsRow.Footer>
+                        <TextBlock Text="{Binding LoadedText}" Margin="0,6,0,0" AutomationProperties.Name="Loaded model">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock" BasedOn="{StaticResource Text.SettingsDescription}">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding LoadedText}" Value="">
+                                            <Setter Property="Visibility" Value="Collapsed" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                    </controls:SettingsRow.Footer>
+                    <Ellipse Width="11" Height="11" Fill="{StaticResource Brush.Text.HistorySection}"
+                             AutomationProperties.Name="Model status light">
+                        <Ellipse.Style>
+                            <Style TargetType="Ellipse">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsReady}" Value="True">
+                                        <Setter Property="Fill" Value="{StaticResource Brush.Settings.Good}" />
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding IsBusy}" Value="True">
+                                        <Setter Property="Fill" Value="{StaticResource Brush.Settings.Warning}" />
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding IsFailed}" Value="True">
+                                        <Setter Property="Fill" Value="{StaticResource Brush.Settings.Error}" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Ellipse.Style>
+                    </Ellipse>
+                </controls:SettingsRow>
+            </HeaderedContentControl>
+
+            <HeaderedContentControl Header="Context" Style="{StaticResource SettingsGroup}">
+                <StackPanel>
+                    <controls:SettingsRow Header="Ordinary conversations" Footer="{Binding NormalLimit}">
+                        <TextBox Style="{StaticResource SettingsTextBox}"
+                                 Text="{Binding NormalLimit.Text, UpdateSourceTrigger=PropertyChanged}"
+                                 controls:SettingsField.IsInvalid="{Binding NormalLimit.HasError}"
+                                 AutomationProperties.Name="Context limit for ordinary conversations" />
+                    </controls:SettingsRow>
+                    <Rectangle Style="{StaticResource SettingsSeparator}" />
+                    <controls:SettingsRow Header="Conversations with files" Footer="{Binding HeavyLimit}">
+                        <TextBox Style="{StaticResource SettingsTextBox}"
+                                 Text="{Binding HeavyLimit.Text, UpdateSourceTrigger=PropertyChanged}"
+                                 controls:SettingsField.IsInvalid="{Binding HeavyLimit.HasError}"
+                                 AutomationProperties.Name="Context limit for conversations with files" />
+                    </controls:SettingsRow>
+                    <Rectangle Style="{StaticResource SettingsSeparator}" />
+                    <controls:SettingsRow Header="Room kept for the answer" Footer="{Binding DataContext.Context.ReservedForAnswer, RelativeSource={RelativeSource AncestorType=Window}}">
+                        <TextBox Style="{StaticResource SettingsTextBox}"
+                                 Text="{Binding DataContext.Context.ReservedForAnswer.Text, RelativeSource={RelativeSource AncestorType=Window}, UpdateSourceTrigger=PropertyChanged}"
+                                 controls:SettingsField.IsInvalid="{Binding DataContext.Context.ReservedForAnswer.HasError, RelativeSource={RelativeSource AncestorType=Window}}"
+                                 AutomationProperties.Name="Tokens kept for the answer" />
+                    </controls:SettingsRow>
+                    <Rectangle Style="{StaticResource SettingsSeparator}" />
+                    <controls:SettingsRow Header="Files attached to one request" Footer="{Binding DataContext.Context.MaxAttachedFiles, RelativeSource={RelativeSource AncestorType=Window}}">
+                        <TextBox Style="{StaticResource SettingsTextBox}" Width="100"
+                                 Text="{Binding DataContext.Context.MaxAttachedFiles.Text, RelativeSource={RelativeSource AncestorType=Window}, UpdateSourceTrigger=PropertyChanged}"
+                                 controls:SettingsField.IsInvalid="{Binding DataContext.Context.MaxAttachedFiles.HasError, RelativeSource={RelativeSource AncestorType=Window}}"
+                                 AutomationProperties.Name="Most files attached to one request" />
+                    </controls:SettingsRow>
+                    <Rectangle Style="{StaticResource SettingsSeparator}" />
+                    <controls:SettingsRow Header="Files found to ground an answer" Footer="{Binding DataContext.Context.MaxRetrievedFiles, RelativeSource={RelativeSource AncestorType=Window}}">
+                        <TextBox Style="{StaticResource SettingsTextBox}" Width="100"
+                                 Text="{Binding DataContext.Context.MaxRetrievedFiles.Text, RelativeSource={RelativeSource AncestorType=Window}, UpdateSourceTrigger=PropertyChanged}"
+                                 controls:SettingsField.IsInvalid="{Binding DataContext.Context.MaxRetrievedFiles.HasError, RelativeSource={RelativeSource AncestorType=Window}}"
+                                 AutomationProperties.Name="Most files found to ground an answer" />
+                    </controls:SettingsRow>
+                    <Rectangle Style="{StaticResource SettingsSeparator}" />
+                    <controls:SettingsRow Header="Largest file to read (MB)" Footer="{Binding DataContext.Context.MaxFileSizeMegabytes, RelativeSource={RelativeSource AncestorType=Window}}">
+                        <TextBox Style="{StaticResource SettingsTextBox}" Width="100"
+                                 Text="{Binding DataContext.Context.MaxFileSizeMegabytes.Text, RelativeSource={RelativeSource AncestorType=Window}, UpdateSourceTrigger=PropertyChanged}"
+                                 controls:SettingsField.IsInvalid="{Binding DataContext.Context.MaxFileSizeMegabytes.HasError, RelativeSource={RelativeSource AncestorType=Window}}"
+                                 AutomationProperties.Name="Largest file to read in megabytes" />
+                    </controls:SettingsRow>
+                </StackPanel>
+            </HeaderedContentControl>
+
+
+        </StackPanel>
+    </DataTemplate>
+
+    <!-- Privacy, with Cleanup: what is kept, and for how long. -->
+    <DataTemplate DataType="{x:Type settings:PrivacyPage}">
+        <StackPanel>
+            <HeaderedContentControl Header="Network" Style="{StaticResource SettingsGroup}">
+                <controls:SettingsRow Header="Local Only">
+                    <CheckBox Style="{StaticResource SettingsToggle}" IsChecked="{Binding LocalOnly}"
+                              AutomationProperties.Name="Local Only" />
+                </controls:SettingsRow>
+            </HeaderedContentControl>
+            <HeaderedContentControl Header="History" Style="{StaticResource SettingsGroup}">
+                <StackPanel>
+                    <controls:SettingsRow Header="Save my conversations">
+                        <CheckBox Style="{StaticResource SettingsToggle}" IsChecked="{Binding HistoryEnabled}"
+                                  AutomationProperties.Name="Save my conversations" />
+                    </controls:SettingsRow>
+                    <Rectangle Style="{StaticResource SettingsSeparator}" />
+                    <controls:SettingsRow Header="Keep history for">
+                        <ComboBox Style="{StaticResource SettingsComboBox}" MinWidth="180" ItemsSource="{Binding Retentions}"
+                                  DisplayMemberPath="Label" SelectedItem="{Binding Retention}"
+                                  AutomationProperties.Name="Keep history for" />
+                    </controls:SettingsRow>
+                </StackPanel>
+            </HeaderedContentControl>
+            <!-- Each row reads as a sentence with its number in it, which is typed over. -->
+            <HeaderedContentControl Header="Cleanup" Style="{StaticResource SettingsGroup}">
+                <StackPanel>
+                    <controls:SettingsRow Header="Delete all chats from the search bar after"
+                                          Footer="{Binding DataContext.Cleanup.BarChatHours, RelativeSource={RelativeSource AncestorType=Window}}">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBox Style="{StaticResource SettingsTextBox}" Width="72" MaxLength="6"
+                                     Text="{Binding DataContext.Cleanup.BarChatHours.Text, RelativeSource={RelativeSource AncestorType=Window}, UpdateSourceTrigger=PropertyChanged}"
+                                     controls:SettingsField.IsInvalid="{Binding DataContext.Cleanup.BarChatHours.HasError, RelativeSource={RelativeSource AncestorType=Window}}"
+                                     AutomationProperties.Name="Hours before chats from the search bar are deleted" />
+                            <TextBlock Margin="8,0,16,0" VerticalAlignment="Center" Style="{StaticResource Text.SettingsDescription}" Text="hours" />
+                            <CheckBox Style="{StaticResource SettingsToggle}" IsChecked="{Binding DataContext.Cleanup.DeleteBarChats, RelativeSource={RelativeSource AncestorType=Window}}"
+                                      AutomationProperties.Name="Delete all chats from the search bar" />
+                        </StackPanel>
+                    </controls:SettingsRow>
+                    <Rectangle Style="{StaticResource SettingsSeparator}" />
+                    <controls:SettingsRow Header="Delete all full screen chats after"
+                                          Footer="{Binding DataContext.Cleanup.WindowChatDays, RelativeSource={RelativeSource AncestorType=Window}}">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBox Style="{StaticResource SettingsTextBox}" Width="72" MaxLength="5"
+                                     Text="{Binding DataContext.Cleanup.WindowChatDays.Text, RelativeSource={RelativeSource AncestorType=Window}, UpdateSourceTrigger=PropertyChanged}"
+                                     controls:SettingsField.IsInvalid="{Binding DataContext.Cleanup.WindowChatDays.HasError, RelativeSource={RelativeSource AncestorType=Window}}"
+                                     AutomationProperties.Name="Days before full screen chats are deleted" />
+                            <TextBlock Margin="8,0,16,0" VerticalAlignment="Center" Style="{StaticResource Text.SettingsDescription}" Text="days" />
+                            <CheckBox Style="{StaticResource SettingsToggle}" IsChecked="{Binding DataContext.Cleanup.DeleteWindowChats, RelativeSource={RelativeSource AncestorType=Window}}"
+                                      AutomationProperties.Name="Delete all full screen chats" />
+                        </StackPanel>
+                    </controls:SettingsRow>
+                </StackPanel>
+            </HeaderedContentControl>
+            <HeaderedContentControl Header="Clipboard" Style="{StaticResource SettingsGroup}"
+                                    Visibility="{Binding HasClipboardHistory, Converter={StaticResource Settings.ShowWhenTrue}}">
+                <controls:SettingsRow Header="Clipboard history">
+                    <controls:SettingsRow.Footer>
+                        <TextBlock Margin="0,8,0,0" Text="{Binding ClipboardHistoryStatus}" Style="{StaticResource Text.SettingsDescription}" />
+                    </controls:SettingsRow.Footer>
+                    <Button Style="{StaticResource SettingsButton}" Content="Clear clipboard history"
+                            Command="{Binding ClearClipboardHistoryCommand}"
+                            AutomationProperties.Name="Clear clipboard history" />
+                </controls:SettingsRow>
+            </HeaderedContentControl>
+            <HeaderedContentControl Header="Search" Style="{StaticResource SettingsGroup}">
+                <controls:SettingsRow Header="Folders kept out of search">
+                    <controls:SettingsRow.Footer>
+                        <StackPanel Margin="0,8,0,0">
+                            <ItemsControl ItemsSource="{Binding ExcludedFolders}" AutomationProperties.Name="Excluded folders">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <DockPanel Margin="0,2,0,2" LastChildFill="True">
+                                            <Button DockPanel.Dock="Right" Style="{StaticResource SettingsButton}" Content="Remove" Margin="12,0,0,0"
+                                                    Command="{Binding DataContext.RemoveExcludedFolderCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                    CommandParameter="{Binding}" AutomationProperties.Name="Remove this folder from the list" />
+                                            <TextBlock Text="{Binding}" Style="{StaticResource Text.SettingsPath}" VerticalAlignment="Center" />
+                                        </DockPanel>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                            <TextBlock Text="None." Style="{StaticResource Text.SettingsDescription}">
+                                <TextBlock.Visibility>
+                                    <Binding Path="HasExcludedFolders">
+                                        <Binding.Converter>
+                                            <controls:InvertedVisibilityConverter />
+                                        </Binding.Converter>
+                                    </Binding>
+                                </TextBlock.Visibility>
+                            </TextBlock>
+                        </StackPanel>
+                    </controls:SettingsRow.Footer>
+                    <Button Style="{StaticResource SettingsButton}" Content="Add folder…" Command="{Binding AddExcludedFolderCommand}"
+                            AutomationProperties.Name="Add a folder to keep out of search" />
+                </controls:SettingsRow>
+            </HeaderedContentControl>
+        </StackPanel>
+    </DataTemplate>
+    <!-- A permission: its name and what allowing it does, with a switch that is off and cannot be moved while the Assistant
+         cannot do the thing. The line above the row is every row's but its group's first. -->
+    <DataTemplate DataType="{x:Type settings:PermissionItem}">
+        <StackPanel>
+            <Rectangle Style="{StaticResource SettingsSeparator}"
+                       Visibility="{Binding ShowsDivider, Converter={StaticResource Settings.ShowWhenTrue}}" />
+            <controls:SettingsRow Header="{Binding Title}" Description="{Binding Summary}" Status="{Binding Status}">
+                <Grid>
+                    <!-- A permission whose uses can be asked about one by one has three choices (step 119); the others are a switch. -->
+                    <CheckBox Style="{StaticResource SettingsToggle}" IsChecked="{Binding IsOn}"
+                              Visibility="{Binding ShowsSwitch, Converter={StaticResource Settings.ShowWhenTrue}}"
+                              AutomationProperties.Name="{Binding Title, StringFormat={}{0} permission}" />
+                    <ComboBox Style="{StaticResource SettingsComboBox}" MinWidth="140" ItemsSource="{Binding Choices}" DisplayMemberPath="Label"
+                              SelectedItem="{Binding SelectedChoice}"
+                              Visibility="{Binding SupportsAskEveryTime, Converter={StaticResource Settings.ShowWhenTrue}}"
+                              AutomationProperties.Name="{Binding Title, StringFormat={}{0} permission}" />
+                </Grid>
+            </controls:SettingsRow>
+        </StackPanel>
+    </DataTemplate>
+
+    <!-- A group of permissions: its heading over a card of its rows. -->
+    <DataTemplate DataType="{x:Type settings:PermissionGroup}">
+        <HeaderedContentControl Header="{Binding Title}" Style="{StaticResource SettingsGroup}">
+            <ItemsControl ItemsSource="{Binding Items}" IsTabStop="False" Focusable="False" />
+        </HeaderedContentControl>
+    </DataTemplate>
+
+    <!-- Permissions: what the Assistant may use, in groups. -->
+    <DataTemplate DataType="{x:Type settings:PermissionsPage}">
+        <StackPanel>
+            <ItemsControl ItemsSource="{Binding Groups}" IsTabStop="False" Focusable="False"
+                          AutomationProperties.Name="Permissions" />
+
+            <!-- The actions the user answered "Always allow" for when asked: each can be asked about again. Shown only when there are any. -->
+            <HeaderedContentControl Header="Always allowed" Style="{StaticResource SettingsGroup}"
+                                    Visibility="{Binding HasAlwaysAllowed, Converter={StaticResource Settings.ShowWhenTrue}}">
+                <StackPanel>
+                    <ItemsControl ItemsSource="{Binding AlwaysAllowed}" IsTabStop="False" Focusable="False" AutomationProperties.Name="Actions that are always allowed">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate DataType="{x:Type settings:AlwaysAllowedItem}">
+                                <Grid Margin="18,8,18,8">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Style="{StaticResource Text.SettingsDescription}" Text="{Binding Title}" TextWrapping="Wrap" VerticalAlignment="Center" />
+                                    <Button Grid.Column="1" Style="{StaticResource SettingsButton}" Content="Ask again" Command="{Binding AskAgainCommand}" Margin="12,0,0,0"
+                                            AutomationProperties.Name="{Binding AskAgainName}" />
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </HeaderedContentControl>
+        </StackPanel>
+    </DataTemplate>
+
+    <!-- Hotkeys. -->
+    <DataTemplate DataType="{x:Type settings:HotkeysPage}">
+        <HeaderedContentControl Header="Global shortcuts" Style="{StaticResource SettingsGroup}">
+            <StackPanel>
+                <controls:SettingsRow Header="Search or Ask"
+                                      Status="AtNextStart" Footer="{Binding SearchOrAsk}">
+                    <ContentControl Content="{Binding SearchOrAsk}" ContentTemplate="{StaticResource SettingsHotkeyKeys}"
+                                    IsTabStop="False" />
+                </controls:SettingsRow>
+                <Rectangle Style="{StaticResource SettingsSeparator}" />
+                <controls:SettingsRow Header="Selected text"
+                                      Status="AtNextStart" Footer="{Binding SelectedText}">
+                    <ContentControl Content="{Binding SelectedText}" ContentTemplate="{StaticResource SettingsHotkeyKeys}"
+                                    IsTabStop="False" />
+                </controls:SettingsRow>
+                <Rectangle Style="{StaticResource SettingsSeparator}" />
+                <controls:SettingsRow Header="Visual Intelligence"
+                                      Status="AtNextStart" Footer="{Binding VisualIntelligence}">
+                    <ContentControl Content="{Binding VisualIntelligence}" ContentTemplate="{StaticResource SettingsHotkeyKeys}"
+                                    IsTabStop="False" />
+                </controls:SettingsRow>
+                <Rectangle Style="{StaticResource SettingsSeparator}" />
+                <controls:SettingsRow Header="Selected text by copy"
+                                      Status="AtNextStart" Footer="{Binding SelectedTextByCopy}">
+                    <ContentControl Content="{Binding SelectedTextByCopy}" ContentTemplate="{StaticResource SettingsHotkeyKeys}"
+                                    IsTabStop="False" />
+                </controls:SettingsRow>
+            </StackPanel>
+        </HeaderedContentControl>
+    </DataTemplate>
+
+    <!-- One text-to-speech engine: what it is and whether its files are installed on this PC and whole (step 123). -->
+    <DataTemplate DataType="{x:Type settings:VoiceEngineItem}">
+        <StackPanel Margin="18,14,18,14">
+            <TextBlock Text="{Binding DisplayName}" Style="{StaticResource Text.SettingsHeader}" />
+            <TextBlock Text="{Binding Summary}" Style="{StaticResource Text.SettingsDescription}" Margin="0,2,0,0" />
+            <TextBlock x:Name="Status" Text="{Binding Status}" Style="{StaticResource Text.SettingsDescription}" Margin="0,8,0,0"
+                       AutomationProperties.LiveSetting="Polite" />
+            <TextBlock Text="{Binding Location}" Style="{StaticResource Text.SettingsPath}" Margin="0,3,0,0" />
+        </StackPanel>
+        <DataTemplate.Triggers>
+            <DataTrigger Binding="{Binding IsAvailable}" Value="True">
+                <Setter TargetName="Status" Property="Foreground" Value="{StaticResource Brush.Settings.Good}" />
+            </DataTrigger>
+            <DataTrigger Binding="{Binding NeedsAttention}" Value="True">
+                <Setter TargetName="Status" Property="Foreground" Value="{StaticResource Brush.Settings.Warning}" />
+            </DataTrigger>
+        </DataTemplate.Triggers>
+    </DataTemplate>
+
+    <!-- Voice (step 125): the voice that speaks answers, how fast each voice is on this PC, the wake word, speech recognition, and which voices are installed. Everything
+         runs on this PC from files in the voices folders. -->
+    <DataTemplate DataType="{x:Type settings:VoicePage}">
+        <StackPanel>
+            <HeaderedContentControl Header="Voice setup and downloads">
+                <HeaderedContentControl.Style><Style TargetType="HeaderedContentControl" BasedOn="{StaticResource SettingsGroup}"><Style.Triggers><DataTrigger Binding="{Binding DataContext.Setup, RelativeSource={RelativeSource AncestorType=Window}}" Value="{x:Null}"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></HeaderedContentControl.Style>
+                <StackPanel Margin="18"><setup:VoiceSetupControl DataContext="{Binding DataContext.Setup, RelativeSource={RelativeSource AncestorType=Window}}"/>
+                    <setup:LibraryControl DataContext="{Binding DataContext.Setup, RelativeSource={RelativeSource AncestorType=Window}}"/>
+                </StackPanel>
+            </HeaderedContentControl>
+            <StackPanel>
+                <StackPanel.Style><Style TargetType="StackPanel"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding DataContext.Setup, RelativeSource={RelativeSource AncestorType=Window}}" Value="{x:Null}"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></StackPanel.Style>
+            <HeaderedContentControl Header="Spoken answers" Style="{StaticResource SettingsGroup}">
+                <StackPanel>
+                    <controls:SettingsRow Header="Text-to-speech model" Layout="Stacked">
+                        <controls:SettingsRow.Footer>
+                            <StackPanel Margin="0,6,0,0">
+                                <TextBlock Text="{Binding SelectedModel.Summary}" Style="{StaticResource Text.SettingsDescription}" />
+                                <TextBlock x:Name="EngineStatus" Text="{Binding EngineStatus}" Margin="0,6,0,0" Style="{StaticResource Text.SettingsDescription}"
+                                           AutomationProperties.LiveSetting="Polite" AutomationProperties.Name="Voice status" TextWrapping="Wrap" />
+                            </StackPanel>
+                        </controls:SettingsRow.Footer>
+                        <ComboBox Style="{StaticResource SettingsComboBox}" MinWidth="240" ItemsSource="{Binding Models}"
+                                  DisplayMemberPath="DisplayName" SelectedItem="{Binding SelectedModel}"
+                                  IsEnabled="{Binding IsNotMeasuring}"
+                                  AutomationProperties.Name="Text-to-speech model" />
+                    </controls:SettingsRow>
+                    <StackPanel Visibility="{Binding HasVoice, Converter={StaticResource Settings.ShowWhenTrue}}">
+                        <Rectangle Style="{StaticResource SettingsSeparator}" />
+                        <controls:SettingsRow Header="Hear it">
+                            <controls:SettingsRow.Footer>
+                                <TextBlock Margin="0,6,0,0" Style="{StaticResource Text.SettingsDescription}" Text="{Binding SampleResult}"
+                                           AutomationProperties.LiveSetting="Polite" TextWrapping="Wrap" />
+                            </controls:SettingsRow.Footer>
+                            <Button Style="{StaticResource SettingsButton}" Content="Speak a sample" Command="{Binding SpeakSampleCommand}"
+                                    AutomationProperties.Name="Speak a sample sentence" />
+                        </controls:SettingsRow>
+                    </StackPanel>
+                </StackPanel>
+            </HeaderedContentControl>
+            <HeaderedContentControl Header="Voice speed on this PC" Style="{StaticResource SettingsGroup}"
+                                    Visibility="{Binding HasVoice, Converter={StaticResource Settings.ShowWhenTrue}}">
+                <StackPanel>
+                    <controls:SettingsRow Header="Measure the voices">
+                        <controls:SettingsRow.Footer>
+                            <TextBlock Margin="0,6,0,0" Style="{StaticResource Text.SettingsDescription}" Text="{Binding MeasureSummary}"
+                                       AutomationProperties.LiveSetting="Polite" TextWrapping="Wrap" />
+                        </controls:SettingsRow.Footer>
+                        <StackPanel Orientation="Horizontal">
+                            <Button Style="{StaticResource SettingsButton}" Content="Measure this voice" Command="{Binding MeasureCommand}"
+                                    AutomationProperties.Name="Measure the chosen voice" />
+                            <Button Style="{StaticResource SettingsButton}" Content="Compare all" Command="{Binding CompareAllCommand}" Margin="8,0,0,0"
+                                    AutomationProperties.Name="Measure every installed voice and compare them" />
+                        </StackPanel>
+                    </controls:SettingsRow>
+                    <StackPanel Visibility="{Binding HasRows, Converter={StaticResource Settings.ShowWhenTrue}}">
+                        <Rectangle Style="{StaticResource SettingsSeparator}" />
+                        <ItemsControl ItemsSource="{Binding Rows}" IsTabStop="False" AutomationProperties.Name="Voice measurements" />
+                    </StackPanel>
+                </StackPanel>
+            </HeaderedContentControl>
+            </StackPanel>
+        </StackPanel>
+        <DataTemplate.Triggers>
+            <DataTrigger Binding="{Binding EngineIsReady}" Value="True">
+                <Setter TargetName="EngineStatus" Property="Foreground" Value="{StaticResource Brush.Settings.Good}" />
+            </DataTrigger>
+            <DataTrigger Binding="{Binding EngineNeedsAttention}" Value="True">
+                <Setter TargetName="EngineStatus" Property="Foreground" Value="{StaticResource Brush.Settings.Warning}" />
+            </DataTrigger>
+        </DataTemplate.Triggers>
+    </DataTemplate>
+
+    <!-- What the Assistant listens with, on the ASR page under the recognizer's setup: the wake word's switch and the microphone where there is no setup to hold them (the
+         setup has both, the microphone under the wake word), and a line about the recognizer when there is something to say about it. It is drawn from the Voice page's own state (the microphone and the recognizer are the voice's), so the Voice page itself is only about the voice
+         that speaks. -->
+    <DataTemplate x:Key="Settings.Listening">
+        <StackPanel>
+            <HeaderedContentControl Header="Wake word">
+                <HeaderedContentControl.Style><Style TargetType="HeaderedContentControl" BasedOn="{StaticResource SettingsGroup}"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding DataContext.Setup, RelativeSource={RelativeSource AncestorType=Window}}" Value="{x:Null}"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></HeaderedContentControl.Style>
+                <controls:SettingsRow Header="Wake word &#8220;Hey Kiri&#8221;">
+                    <controls:SettingsRow.Footer>
+                        <TextBlock x:Name="WakeStatus" Margin="0,6,0,0" Style="{StaticResource Text.SettingsDescription}" Text="{Binding WakeWordStatus}"
+                                   AutomationProperties.LiveSetting="Polite" TextWrapping="Wrap" />
+                    </controls:SettingsRow.Footer>
+                    <CheckBox Style="{StaticResource SettingsToggle}" IsChecked="{Binding WakeWordEnabled}"
+                              AutomationProperties.Name="Wake word Kiri" />
+                </controls:SettingsRow>
+            </HeaderedContentControl>
+            <HeaderedContentControl Header="Microphone">
+                <HeaderedContentControl.Style><Style TargetType="HeaderedContentControl" BasedOn="{StaticResource SettingsGroup}"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><MultiDataTrigger><MultiDataTrigger.Conditions><Condition Binding="{Binding DataContext.Setup, RelativeSource={RelativeSource AncestorType=Window}}" Value="{x:Null}"/><Condition Binding="{Binding HasMicrophones}" Value="True"/></MultiDataTrigger.Conditions><Setter Property="Visibility" Value="Visible"/></MultiDataTrigger></Style.Triggers></Style></HeaderedContentControl.Style>
+                <controls:SettingsRow Header="Listen with">
+                    <controls:SettingsRow.Footer>
+                        <TextBlock x:Name="MicrophoneNote" Margin="0,6,0,0" Style="{StaticResource Text.SettingsDescription}" Text="{Binding MicrophoneNote}"
+                                   AutomationProperties.LiveSetting="Polite" TextWrapping="Wrap" />
+                    </controls:SettingsRow.Footer>
+                    <StackPanel Orientation="Horizontal">
+                        <ComboBox Style="{StaticResource SettingsComboBox}" MinWidth="240" ItemsSource="{Binding Microphones}"
+                                  DisplayMemberPath="Name" SelectedItem="{Binding SelectedMicrophone}"
+                                  AutomationProperties.Name="Microphone" />
+                        <Button Style="{StaticResource SettingsButton}" Content="Look again" Margin="8,0,0,0" Command="{Binding RefreshMicrophonesCommand}"
+                                AutomationProperties.Name="Look for microphones again" />
+                    </StackPanel>
+                </controls:SettingsRow>
+            </HeaderedContentControl>
+            <HeaderedContentControl Header="Speech recognition" Style="{StaticResource SettingsGroup}"
+                                    Visibility="{Binding HasRecognizerStatus, Converter={StaticResource Settings.ShowWhenTrue}}">
+                <controls:SettingsRow Header="Recognizer">
+                    <controls:SettingsRow.Footer>
+                        <TextBlock x:Name="RecognizerStatus" Margin="0,6,0,0" Style="{StaticResource Text.SettingsDescription}" Text="{Binding RecognizerStatus}"
+                                   AutomationProperties.LiveSetting="Polite" TextWrapping="Wrap" />
+                    </controls:SettingsRow.Footer>
+                </controls:SettingsRow>
+            </HeaderedContentControl>
+
+        </StackPanel>
+        <DataTemplate.Triggers>
+            <DataTrigger Binding="{Binding WakeWordNeedsAttention}" Value="True">
+                <Setter TargetName="WakeStatus" Property="Foreground" Value="{StaticResource Brush.Settings.Warning}" />
+            </DataTrigger>
+            <DataTrigger Binding="{Binding RecognizerNeedsAttention}" Value="True">
+                <Setter TargetName="RecognizerStatus" Property="Foreground" Value="{StaticResource Brush.Settings.Warning}" />
+            </DataTrigger>
+        </DataTemplate.Triggers>
+    </DataTemplate>
+
+    <!-- ASR: everything about listening, in one place. The recognizer's setup is the one onboarding uses (which recognizer, the device it runs on, its downloads and the wake
+         word); under it are the microphone and how the recognizer is doing. None of it is repeated on the Voice page. -->
+    <DataTemplate DataType="{x:Type settings:AsrPage}">
+        <StackPanel>
+            <HeaderedContentControl Header="Speech recognition and wake word" Style="{StaticResource SettingsGroup}"
+                                    Visibility="{Binding HasSetup, Converter={StaticResource Settings.ShowWhenTrue}}">
+                <StackPanel Margin="18">
+                    <controls:SettingsRow Header="Speech recognition" Layout="Stacked">
+                        <setup:VoiceControlSetupControl DataContext="{Binding Setup}" ShowApplyButton="False" ShowStatus="True" />
+                    </controls:SettingsRow>
+                </StackPanel>
+            </HeaderedContentControl>
+            <ContentControl Content="{Binding Listening}" ContentTemplate="{StaticResource Settings.Listening}" IsTabStop="False" Focusable="False" />
+        </StackPanel>
+    </DataTemplate>
+
+    <!-- One line of the voice-speed table: the voice, how soon its first sound comes for a short answer and over a few texts, how fast it works, and how long it took to
+         load. -->
+    <DataTemplate DataType="{x:Type settings:VoiceBenchmarkRow}">
+        <Grid Margin="18,10,18,10">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <StackPanel>
+                <TextBlock Text="{Binding Name}" Style="{StaticResource Text.SettingsHeader}" />
+                <TextBlock x:Name="Note" Text="{Binding Note}" Style="{StaticResource Text.SettingsDescription}" Margin="0,2,0,0" TextWrapping="Wrap"
+                           Visibility="Collapsed" />
+            </StackPanel>
+            <StackPanel Grid.Column="1" Margin="12,0,0,0" MinWidth="86">
+                <TextBlock Text="First sound" Style="{StaticResource Text.SettingsDescription}" />
+                <TextBlock Text="{Binding FirstAudio}" Style="{StaticResource Text.SettingsHeader}" FontWeight="Normal"
+                           AutomationProperties.Name="{Binding FirstAudio, StringFormat=First sound after {0}}" />
+            </StackPanel>
+            <StackPanel Grid.Column="2" Margin="12,0,0,0" MinWidth="104">
+                <TextBlock Text="Speed" Style="{StaticResource Text.SettingsDescription}" />
+                <TextBlock Text="{Binding Speed}" Style="{StaticResource Text.SettingsHeader}" FontWeight="Normal" />
+            </StackPanel>
+            <StackPanel Grid.Column="3" Margin="12,0,0,0" MinWidth="64">
+                <TextBlock Text="Load" Style="{StaticResource Text.SettingsDescription}" />
+                <TextBlock Text="{Binding Load}" Style="{StaticResource Text.SettingsHeader}" FontWeight="Normal" />
+            </StackPanel>
+        </Grid>
+        <DataTemplate.Triggers>
+            <DataTrigger Binding="{Binding HasNote}" Value="True">
+                <Setter TargetName="Note" Property="Visibility" Value="Visible" />
+                <Setter TargetName="Note" Property="Foreground" Value="{StaticResource Brush.Settings.Warning}" />
+            </DataTrigger>
+        </DataTemplate.Triggers>
+    </DataTemplate>
+
+    <!-- A connected app the Assistant installed (PROJECT_SPEC section 4.8, step 109): what it is and how it is doing, a switch that turns it on or off, and the
+         buttons for reconnecting, updating and removing it. An update is shown under it as the approval panel an installation has, and removing asks once more.
+         The line above it is every item's but the first. -->
+    <DataTemplate DataType="{x:Type settings:ConnectedAppItem}">
+        <StackPanel>
+            <Rectangle x:Name="Divider" Style="{StaticResource SettingsSeparator}" />
+            <Grid Margin="18,14,18,12">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <StackPanel>
+                    <TextBlock Text="{Binding Name}" Style="{StaticResource Text.SettingsHeader}" />
+                    <TextBlock Text="{Binding Summary}" Style="{StaticResource Text.SettingsDescription}" Margin="0,2,0,0" />
+                    <TextBlock x:Name="Health" Text="{Binding Health}" Style="{StaticResource Text.SettingsDescription}" Margin="0,8,0,0"
+                               AutomationProperties.Name="{Binding Health, StringFormat=Status: {0}}" />
+                    <TextBlock x:Name="UpdateText" Text="{Binding UpdateText}" Style="{StaticResource Text.SettingsDescription}" Margin="0,8,0,0"
+                               Foreground="{StaticResource Brush.Settings.Good}" Visibility="Collapsed" />
+                    <TextBlock Text="{Binding Message}" Style="{StaticResource Text.SettingsDescription}" Margin="0,8,0,0" TextWrapping="Wrap"
+                               Visibility="{Binding HasMessage, Converter={StaticResource Settings.ShowWhenTrue}}" AutomationProperties.LiveSetting="Polite" />
+                </StackPanel>
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Top" Margin="16,0,0,0">
+                    <Button Style="{StaticResource SettingsButton}" Content="{Binding DetailsLabel}" Margin="0,0,12,0" Command="{Binding ToggleDetailsCommand}"
+                            AutomationProperties.Name="{Binding Name, StringFormat=Show or hide the details of {0}}" />
+                    <CheckBox Style="{StaticResource SettingsToggle}" IsChecked="{Binding Enabled}" VerticalAlignment="Center"
+                              AutomationProperties.Name="{Binding Name, StringFormat=Turn {0} on or off}" />
+                </StackPanel>
+            </Grid>
+            <!-- The details, under the app's line when Manage is pressed: what it may do, its sign-in and keys, and the buttons that reconnect, update and remove it. -->
+            <StackPanel x:Name="Details" Visibility="{Binding IsExpanded, Converter={StaticResource Settings.ShowWhenTrue}}">
+            <StackPanel Margin="18,0,18,12">
+                <TextBlock Text="{Binding Permissions}" Style="{StaticResource Text.SettingsDescription}" TextWrapping="Wrap" />
+                <TextBlock Text="{Binding ToolsText}" Style="{StaticResource Text.SettingsDescription}" Margin="0,4,0,10" TextWrapping="Wrap" />
+                <TextBlock Text="Allow" Style="{StaticResource Text.SettingsHeader}" Margin="0,2,0,0" />
+                <Grid Margin="0,8,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel>
+                        <TextBlock Text="Read information" Style="{StaticResource Text.SettingsHeader}" FontWeight="Normal" />
+                    </StackPanel>
+                    <CheckBox Grid.Column="1" Style="{StaticResource SettingsToggle}" IsChecked="{Binding AllowReads}" Margin="16,0,0,0" VerticalAlignment="Top"
+                              AutomationProperties.Name="{Binding Name, StringFormat=Read information for {0}}" />
+                </Grid>
+                <Grid Margin="0,8,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel>
+                        <TextBlock Text="Change things" Style="{StaticResource Text.SettingsHeader}" FontWeight="Normal" />
+                    </StackPanel>
+                    <CheckBox Grid.Column="1" Style="{StaticResource SettingsToggle}" IsChecked="{Binding AllowChanges}" Margin="16,0,0,0" VerticalAlignment="Top"
+                              AutomationProperties.Name="{Binding Name, StringFormat=Change things for {0}}" />
+                </Grid>
+                <Grid Margin="0,8,0,0"
+                      Visibility="{Binding ShowsNetwork, Converter={StaticResource Settings.ShowWhenTrue}}">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel>
+                        <TextBlock Text="Use the network" Style="{StaticResource Text.SettingsHeader}" FontWeight="Normal" />
+                    </StackPanel>
+                    <CheckBox Grid.Column="1" Style="{StaticResource SettingsToggle}" IsChecked="{Binding AllowNetwork}" Margin="16,0,0,0" VerticalAlignment="Top"
+                              AutomationProperties.Name="{Binding Name, StringFormat=Use the network for {0}}" />
+                </Grid>
+                <Grid Margin="0,8,0,0"
+                      Visibility="{Binding ShowsAccount, Converter={StaticResource Settings.ShowWhenTrue}}">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel>
+                        <TextBlock Text="Use its account" Style="{StaticResource Text.SettingsHeader}" FontWeight="Normal" />
+                    </StackPanel>
+                    <CheckBox Grid.Column="1" Style="{StaticResource SettingsToggle}" IsChecked="{Binding AllowAccount}" Margin="16,0,0,0" VerticalAlignment="Top"
+                              AutomationProperties.Name="{Binding Name, StringFormat=Use its account for {0}}" />
+                </Grid>
+                <Grid Margin="0,8,0,0"
+                      Visibility="{Binding ShowsUpdates, Converter={StaticResource Settings.ShowWhenTrue}}">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel>
+                        <TextBlock Text="Look for updates" Style="{StaticResource Text.SettingsHeader}" FontWeight="Normal" />
+                    </StackPanel>
+                    <CheckBox Grid.Column="1" Style="{StaticResource SettingsToggle}" IsChecked="{Binding AllowUpdates}" Margin="16,0,0,0" VerticalAlignment="Top"
+                              AutomationProperties.Name="{Binding Name, StringFormat=Look for updates for {0}}" />
+                </Grid>
+            </StackPanel>
+            <StackPanel Margin="18,0,18,10" Visibility="{Binding CanSignIn, Converter={StaticResource Settings.ShowWhenTrue}}">
+                <TextBlock Text="{Binding SignInText}" Style="{StaticResource Text.SettingsDescription}" AutomationProperties.LiveSetting="Polite" />
+                <WrapPanel Margin="0,8,0,0">
+                    <Button Style="{StaticResource SettingsButton}" Content="{Binding SignInLabel}" Margin="0,0,8,0" Command="{Binding SignInCommand}"
+                            AutomationProperties.Name="{Binding Name, StringFormat=Sign in to {0}}" />
+                    <Button Style="{StaticResource SettingsButton}" Content="Sign in in a private window" Margin="0,0,8,0" Command="{Binding SignInPrivateCommand}"
+                            AutomationProperties.Name="{Binding Name, StringFormat=Sign in to {0} in a private window}" />
+                    <Button Style="{StaticResource SettingsButton}" Content="Sign out" Margin="0,0,8,0" Command="{Binding SignOutCommand}"
+                            Visibility="{Binding IsSignedIn, Converter={StaticResource Settings.ShowWhenTrue}}"
+                            AutomationProperties.Name="{Binding Name, StringFormat=Sign out of {0}}" />
+                </WrapPanel>
+                <StackPanel Margin="0,8,0,0" Visibility="{Binding IsSigningIn, Converter={StaticResource Settings.ShowWhenTrue}}">
+                    <TextBlock Text="Waiting for you to finish in the browser."
+                               Style="{StaticResource Text.SettingsDescription}" TextWrapping="Wrap" AutomationProperties.LiveSetting="Polite" />
+                    <WrapPanel Margin="0,6,0,0">
+                        <Button Style="{StaticResource SettingsButton}" Content="Copy sign-in link" Margin="0,0,8,0" Command="{Binding CopySignInLinkCommand}"
+                                AutomationProperties.Name="{Binding Name, StringFormat=Copy the sign-in link for {0}}" />
+                        <Button Style="{StaticResource SettingsButton}" Content="Cancel sign-in" Margin="0,0,8,0" Command="{Binding CancelSignInCommand}"
+                                AutomationProperties.Name="{Binding Name, StringFormat=Stop waiting for the sign-in to {0}}" />
+                    </WrapPanel>
+                </StackPanel>
+                <TextBlock Text="Or paste an access token:" Style="{StaticResource Text.SettingsDescription}"
+                           Margin="0,10,0,0" TextWrapping="Wrap" />
+                <DockPanel Margin="0,6,0,0">
+                    <Button DockPanel.Dock="Right" Style="{StaticResource SettingsButton}" Content="Use token" Margin="8,0,0,0" Command="{Binding UseTokenCommand}"
+                            AutomationProperties.Name="{Binding Name, StringFormat=Use the access token for {0}}" />
+                    <TextBox Style="{StaticResource SettingsTextBox}" Width="Auto" HorizontalContentAlignment="Left" Text="{Binding TokenText, UpdateSourceTrigger=PropertyChanged}"
+                             AutomationProperties.Name="{Binding Name, StringFormat=Access token for {0}}" />
+                </DockPanel>
+            </StackPanel>
+            <StackPanel Margin="18,0,18,10" Visibility="{Binding HasKeys, Converter={StaticResource Settings.ShowWhenTrue}}">
+                <ItemsControl ItemsSource="{Binding Keys}" IsTabStop="False" Focusable="False" Grid.IsSharedSizeScope="True" AutomationProperties.Name="Keys this app asks for">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Grid Margin="0,6,0,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" SharedSizeGroup="KeyName" />
+                                    <ColumnDefinition />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="{Binding Name}" Style="{StaticResource Text.SettingsPath}" VerticalAlignment="Center" Margin="0,0,10,0" />
+                                <TextBox Grid.Column="1" Style="{StaticResource SettingsTextBox}" Width="Auto" HorizontalContentAlignment="Left"
+                                         Text="{Binding Text, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="{Binding Name, StringFormat=Value of {0}}" />
+                                <Button Grid.Column="2" Style="{StaticResource SettingsButton}" Content="Keep key" Margin="8,0,0,0" Command="{Binding SetCommand}"
+                                        AutomationProperties.Name="{Binding Name, StringFormat=Keep the key {0}}" />
+                            </Grid>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </StackPanel>
+            <WrapPanel Margin="18,0,18,14">
+                <Button Style="{StaticResource SettingsButton}" Content="Reconnect" Margin="0,0,8,0" Command="{Binding ReconnectCommand}"
+                        AutomationProperties.Name="{Binding Name, StringFormat=Reconnect {0}}" />
+                <Button Style="{StaticResource SettingsButton}" Content="{Binding UpdateLabel}" Margin="0,0,8,0" Command="{Binding UpdateCommand}"
+                        Visibility="{Binding CanUpdate, Converter={StaticResource Settings.ShowWhenTrue}}"
+                        AutomationProperties.Name="{Binding Name, StringFormat=Update {0}}" />
+                <Button Style="{StaticResource SettingsButton}" Content="Remove" Command="{Binding RemoveCommand}"
+                        AutomationProperties.Name="{Binding Name, StringFormat=Remove {0}}" />
+            </WrapPanel>
+            <StackPanel Margin="18,0,18,14" Visibility="{Binding ConfirmingRemove, Converter={StaticResource Settings.ShowWhenTrue}}">
+                <TextBlock Text="{Binding RemoveQuestion}" Style="{StaticResource Text.SettingsHeader}" FontWeight="Normal" AutomationProperties.LiveSetting="Assertive" />
+                <WrapPanel Margin="0,10,0,0">
+                    <Button Style="{StaticResource SettingsButton}" Content="Remove" Margin="0,0,8,0" Command="{Binding ConfirmRemoveCommand}"
+                            AutomationProperties.Name="{Binding Name, StringFormat='Yes, remove {0}'}" />
+                    <Button Style="{StaticResource SettingsButton}" Content="Keep it" Command="{Binding KeepCommand}"
+                            AutomationProperties.Name="{Binding Name, StringFormat='No, keep {0}'}" />
+                </WrapPanel>
+            </StackPanel>
+            <ContentControl Content="{Binding Offer}" Margin="4,0,4,14" IsTabStop="False" Focusable="False">
+                <ContentControl.Resources>
+                    <Thickness x:Key="Message.CardBleed">0</Thickness>
+                </ContentControl.Resources>
+            </ContentControl>
+            </StackPanel>
+        </StackPanel>
+        <DataTemplate.Triggers>
+            <DataTrigger Binding="{Binding Path=(ItemsControl.AlternationIndex), RelativeSource={RelativeSource AncestorType=ContentPresenter}}" Value="0">
+                <Setter TargetName="Divider" Property="Visibility" Value="Collapsed" />
+            </DataTrigger>
+            <DataTrigger Binding="{Binding HasUpdate}" Value="True">
+                <Setter TargetName="UpdateText" Property="Visibility" Value="Visible" />
+            </DataTrigger>
+            <DataTrigger Binding="{Binding HealthLevel}" Value="Good">
+                <Setter TargetName="Health" Property="Foreground" Value="{StaticResource Brush.Settings.Good}" />
+            </DataTrigger>
+            <DataTrigger Binding="{Binding HealthLevel}" Value="Warning">
+                <Setter TargetName="Health" Property="Foreground" Value="{StaticResource Brush.Glyph.Warning}" />
+            </DataTrigger>
+            <DataTrigger Binding="{Binding HealthLevel}" Value="Problem">
+                <Setter TargetName="Health" Property="Foreground" Value="{StaticResource Brush.Settings.Error}" />
+            </DataTrigger>
+        </DataTemplate.Triggers>
+    </DataTemplate>
+
+    <!-- One app whose server the Assistant knows, with a button that connects it. -->
+    <DataTemplate DataType="{x:Type settings:KnownAppItem}">
+        <Grid Margin="18,8,18,8">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <StackPanel>
+                <TextBlock Text="{Binding Name}" Style="{StaticResource Text.SettingsHeader}" FontWeight="Normal" />
+                <TextBlock Text="{Binding Detail}" Style="{StaticResource Text.SettingsDescription}" TextWrapping="Wrap" />
+            </StackPanel>
+            <Button Grid.Column="1" Style="{StaticResource SettingsButton}" Content="{Binding Label}" Command="{Binding ConnectCommand}" Margin="16,0,0,0" VerticalAlignment="Top"
+                    AutomationProperties.Name="{Binding Name, StringFormat=Connect {0}}" />
+        </Grid>
+    </DataTemplate>
+
+    <!-- The user's Home Assistant among the connections: its name, where it is and how it is, and behind Manage what can be done about it. It has no sign-in
+         buttons and no permission switches of its own: it is reached with the token the user gave, and every change it is asked for is confirmed first. -->
+    <DataTemplate DataType="{x:Type settings:HomeAssistantItem}">
+        <StackPanel>
+            <Rectangle Style="{StaticResource SettingsSeparator}"
+                       Visibility="{Binding DataContext.HasConnectedApps, RelativeSource={RelativeSource AncestorType=HeaderedContentControl}, Converter={StaticResource Settings.ShowWhenTrue}}" />
+            <Grid Margin="18,14,18,12">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <StackPanel>
+                    <TextBlock Text="{Binding Name}" Style="{StaticResource Text.SettingsHeader}" />
+                    <TextBlock Text="{Binding Summary}" Style="{StaticResource Text.SettingsDescription}" Margin="0,2,0,0" TextWrapping="Wrap" />
+                    <TextBlock x:Name="HomeHealth" Text="{Binding Health}" Style="{StaticResource Text.SettingsDescription}" Margin="0,8,0,0"
+                               Foreground="{StaticResource Brush.Settings.Good}" AutomationProperties.Name="{Binding Health, StringFormat=Status: {0}}" />
+                    <TextBlock Text="{Binding Message}" Style="{StaticResource Text.SettingsDescription}" Margin="0,8,0,0" TextWrapping="Wrap"
+                               Visibility="{Binding HasMessage, Converter={StaticResource Settings.ShowWhenTrue}}" AutomationProperties.LiveSetting="Polite" />
+                </StackPanel>
+                <Button Grid.Column="1" Style="{StaticResource SettingsButton}" Content="{Binding DetailsLabel}" Margin="16,0,0,0" VerticalAlignment="Top"
+                        Command="{Binding ToggleDetailsCommand}" AutomationProperties.Name="Show or hide the details of Home Assistant" />
+            </Grid>
+            <StackPanel Margin="18,0,18,14" Visibility="{Binding IsExpanded, Converter={StaticResource Settings.ShowWhenTrue}}">
+                <WrapPanel Margin="0,10,0,0">
+                    <Button Style="{StaticResource SettingsButton}" Content="Check connection" Margin="0,0,8,0" Command="{Binding CheckCommand}"
+                            AutomationProperties.Name="Check the connection to Home Assistant" />
+                    <Button Style="{StaticResource SettingsButton}" Content="Change address or token" Margin="0,0,8,0" Command="{Binding ChangeCommand}"
+                            AutomationProperties.Name="Change Home Assistant's address or token" />
+                    <Button Style="{StaticResource SettingsButton}" Content="Disconnect" Command="{Binding DisconnectCommand}"
+                            AutomationProperties.Name="Disconnect Home Assistant" />
+                </WrapPanel>
+            </StackPanel>
+        </StackPanel>
+        <DataTemplate.Triggers>
+            <DataTrigger Binding="{Binding HasProblem}" Value="True">
+                <Setter TargetName="HomeHealth" Property="Foreground" Value="{StaticResource Brush.Settings.Warning}" />
+            </DataTrigger>
+        </DataTemplate.Triggers>
+    </DataTemplate>
+
+    <!-- Integrations, each thing said once: what is connected (a line for each app, with its details behind Manage), what can be added (every app the Assistant knows how
+         to connect, and the form for a server of the user's own), then the web search provider, updates, what the Assistant adds to Windows, and what few people need. -->
+    <DataTemplate DataType="{x:Type settings:IntegrationsPage}">
+        <StackPanel>
+            <HeaderedContentControl Header="Your connections" Style="{StaticResource SettingsGroup}"
+                                    Visibility="{Binding HasManager, Converter={StaticResource Settings.ShowWhenTrue}}">
+                <StackPanel>
+                    <TextBlock Margin="18,14,18,14" Style="{StaticResource Text.SettingsDescription}" Text="{Binding EmptyText}" TextWrapping="Wrap"
+                               Visibility="{Binding HasNoConnectedApps, Converter={StaticResource Settings.ShowWhenTrue}}" />
+                    <ItemsControl ItemsSource="{Binding ConnectedApps}" AlternationCount="2147483647" IsTabStop="False" Focusable="False"
+                                  AutomationProperties.Name="Connected apps" />
+                    <!-- The user's Home Assistant, while one is connected: a line like the apps', under them. -->
+                    <ContentControl Content="{Binding HomeAssistant}" IsTabStop="False" Focusable="False"
+                                    Visibility="{Binding HasHomeAssistant, Converter={StaticResource Settings.ShowWhenTrue}}" />
+                </StackPanel>
+            </HeaderedContentControl>
+            <HeaderedContentControl Header="Add a connection" Style="{StaticResource SettingsGroup}"
+                                    Visibility="{Binding CanAddConnection, Converter={StaticResource Settings.ShowWhenTrue}}">
+                <StackPanel>
+                    <StackPanel Visibility="{Binding CanConnect, Converter={StaticResource Settings.ShowWhenTrue}}">
+                    <ItemsControl ItemsSource="{Binding AvailableApps}" IsTabStop="False" Focusable="False" AutomationProperties.Name="Apps to connect" />
+                    <TextBlock Margin="18,6,18,10" Style="{StaticResource Text.SettingsDescription}" TextWrapping="Wrap" Text="{Binding ConnectStatus}"
+                               Visibility="{Binding HasConnectStatus, Converter={StaticResource Settings.ShowWhenTrue}}" AutomationProperties.LiveSetting="Polite" />
+                    <WrapPanel Margin="18,0,18,10" Visibility="{Binding IsConnecting, Converter={StaticResource Settings.ShowWhenTrue}}">
+                        <Button Style="{StaticResource SettingsButton}" Content="Copy sign-in link" Margin="0,0,8,0" Command="{Binding CopyConnectLinkCommand}"
+                                AutomationProperties.Name="Copy the sign-in link" />
+                        <Button Style="{StaticResource SettingsButton}" Content="Cancel sign-in" Margin="0,0,8,0" Command="{Binding CancelConnectCommand}"
+                                AutomationProperties.Name="Stop waiting for the sign-in" />
+                    </WrapPanel>
+                    <Rectangle Style="{StaticResource SettingsSeparator}" />
+                    </StackPanel>
+                    <!-- A server of the user's own: the same form the first-run setup has, without its list of apps, which is the list above. -->
+                    <StackPanel Visibility="{Binding DataContext.Setup.Connections.IsAvailable, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource Settings.ShowWhenTrue}, FallbackValue=Collapsed}">
+                        <setup:ConnectionsSetupControl Margin="18,14,18,6" ShowsApps="False" AddLabel="+  Add your own MCP server"
+                                                       DataContext="{Binding DataContext.Setup.Connections, RelativeSource={RelativeSource AncestorType=Window}}" />
+                    </StackPanel>
+                </StackPanel>
+            </HeaderedContentControl>
+            <HeaderedContentControl Header="Web search" Style="{StaticResource SettingsGroup}"
+                                    Visibility="{Binding DataContext.Setup.Search.IsAvailable, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource Settings.ShowWhenTrue}}">
+                <setup:SearchSetupControl Margin="18" DataContext="{Binding DataContext.Setup.Search, RelativeSource={RelativeSource AncestorType=Window}}"/>
+            </HeaderedContentControl>
+            <HeaderedContentControl Header="Updates" Style="{StaticResource SettingsGroup}"
+                                    Visibility="{Binding HasManager, Converter={StaticResource Settings.ShowWhenTrue}}">
+                <controls:SettingsRow Header="Look for updates to connected apps">
+                    <controls:SettingsRow.Footer>
+                        <StackPanel Margin="0,8,0,0">
+                            <TextBlock Text="{Binding UpdateNote}" Style="{StaticResource Text.SettingsDescription}" TextWrapping="Wrap" />
+                            <TextBlock Text="{Binding UpdateSummary}" Style="{StaticResource Text.SettingsDescription}" TextWrapping="Wrap" Margin="0,6,0,0"
+                                       Visibility="{Binding HasUpdateSummary, Converter={StaticResource Settings.ShowWhenTrue}}"
+                                       AutomationProperties.LiveSetting="Polite" />
+                        </StackPanel>
+                    </controls:SettingsRow.Footer>
+                    <StackPanel Orientation="Horizontal">
+                        <Button Style="{StaticResource SettingsButton}" Content="Check now" Margin="0,0,12,0" Command="{Binding CheckNowCommand}"
+                                AutomationProperties.Name="Look for updates now" />
+                        <CheckBox Style="{StaticResource SettingsToggle}" IsChecked="{Binding CheckForUpdates}"
+                                  AutomationProperties.Name="Look for updates to connected apps" />
+                    </StackPanel>
+                </controls:SettingsRow>
+            </HeaderedContentControl>
+            <HeaderedContentControl Header="Windows" Style="{StaticResource SettingsGroup}">
+                <StackPanel>
+                    <controls:SettingsRow Header="File Explorer">
+                        <controls:SettingsRow.Footer>
+                            <StackPanel Margin="0,8,0,0" Visibility="{Binding HasExplorerFirstMenuNotice, Converter={StaticResource Settings.ShowWhenTrue}}">
+                                <TextBlock Text="{Binding ExplorerFirstMenuNotice}" Style="{StaticResource Text.SettingsDescription}" TextWrapping="Wrap"
+                                           AutomationProperties.LiveSetting="Polite" />
+                                <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                                    <Button Style="{StaticResource SettingsButton}" Content="Open Developer settings" Margin="0,0,12,0" Command="{Binding OpenDeveloperSettingsCommand}"
+                                            AutomationProperties.Name="Open Windows developer settings" />
+                                    <Button Style="{StaticResource SettingsButton}" Content="Check again" Command="{Binding CheckExplorerMenuAgainCommand}"
+                                            AutomationProperties.Name="Check whether Ask Assistant is in the first menu" />
+                                </StackPanel>
+                            </StackPanel>
+                        </controls:SettingsRow.Footer>
+                        <CheckBox Style="{StaticResource SettingsToggle}" IsChecked="{Binding ExplorerContextMenu}"
+                                  AutomationProperties.Name="File Explorer menu entry" />
+                    </controls:SettingsRow>
+                    <Rectangle Style="{StaticResource SettingsSeparator}" />
+                    <controls:SettingsRow Header="Edge and Chrome">
+                        <CheckBox Style="{StaticResource SettingsToggle}" IsChecked="{Binding BrowserBridge}"
+                                  AutomationProperties.Name="Edge and Chrome extension" />
+                    </controls:SettingsRow>
+                </StackPanel>
+            </HeaderedContentControl>
+            <HeaderedContentControl Header="Advanced" Style="{StaticResource SettingsGroup}"
+                                    Visibility="{Binding CanConnect, Converter={StaticResource Settings.ShowWhenTrue}}">
+                <controls:SettingsRow Header="Microsoft app ID (optional)">
+                    <TextBox Style="{StaticResource SettingsTextBox}" Width="300" HorizontalContentAlignment="Left" Text="{Binding MicrosoftClientId, UpdateSourceTrigger=PropertyChanged}"
+                             controls:SettingsField.IsInvalid="{Binding MicrosoftClientIdInvalid}" AutomationProperties.Name="Microsoft application (client) ID" />
+                </controls:SettingsRow>
+            </HeaderedContentControl>
+        </StackPanel>
+    </DataTemplate>
+
+    <!-- A field of the People page: the settings field, as wide as its row and typed from the left. -->
+    <Style x:Key="PeopleTextBox" TargetType="TextBox" BasedOn="{StaticResource SettingsTextBox}">
+        <Setter Property="Width" Value="NaN" />
+        <Setter Property="HorizontalContentAlignment" Value="Left" />
+        <Setter Property="HorizontalAlignment" Value="Stretch" />
+    </Style>
+
+    <!-- One number, address or username of a person being edited: its kind, the service it is for, the value, and a button that takes it out. -->
+    <DataTemplate DataType="{x:Type settings:IdentifierItem}">
+        <Grid Margin="0,0,0,8">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="140" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <ComboBox Style="{StaticResource SettingsComboBox}" MinWidth="110" ItemsSource="{Binding Kinds}" DisplayMemberPath="Label"
+                      SelectedItem="{Binding Kind}" AutomationProperties.Name="Kind of address" />
+            <TextBox Grid.Column="1" Style="{StaticResource PeopleTextBox}" Margin="8,0,0,0" Text="{Binding Service, UpdateSourceTrigger=PropertyChanged}"
+                     AutomationProperties.Name="Service, such as WhatsApp (optional)" ToolTip="The messaging service this is for, such as WhatsApp. Leave it empty for any." />
+            <TextBox Grid.Column="2" Style="{StaticResource PeopleTextBox}" Margin="8,0,0,0" Text="{Binding Value, UpdateSourceTrigger=PropertyChanged}"
+                     AutomationProperties.Name="Phone number, email address or username" />
+            <Button Grid.Column="3" Style="{StaticResource SettingsButton}" Margin="8,0,0,0" Content="Remove" Command="{Binding RemoveCommand}"
+                    AutomationProperties.Name="Remove this way to reach them" />
+        </Grid>
+    </DataTemplate>
+
+    <!-- A person in Settings > People: a line with what is known of them and the buttons to edit and remove them, or, while being edited, the fields for their name,
+         the other names they are called, how they relate to the user and the ways to reach them. Removing asks once more. The line above it is every item's but the first. -->
+    <DataTemplate DataType="{x:Type settings:PersonItem}">
+        <StackPanel>
+            <Rectangle x:Name="Divider" Style="{StaticResource SettingsSeparator}" />
+            <Grid Margin="18,14,18,14" Visibility="{Binding IsShowing, Converter={StaticResource Settings.ShowWhenTrue}}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <!-- The person: a disc with their initials, their name, and what is known of them. -->
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition />
+                    </Grid.ColumnDefinitions>
+                    <Border Width="36" Height="36" CornerRadius="18" Margin="0,1,12,0" VerticalAlignment="Top" Background="{StaticResource Brush.Control.Glass}"
+                            BorderBrush="{StaticResource Brush.Stroke.ControlRim}" BorderThickness="1" IsHitTestVisible="False">
+                        <TextBlock Text="{Binding Initials}" Style="{StaticResource Text.SettingsHeader}" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="13" />
+                    </Border>
+                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                        <TextBlock Text="{Binding Title}" Style="{StaticResource Text.SettingsHeader}" />
+                        <TextBlock Text="{Binding Subtitle}" Style="{StaticResource Text.SettingsDescription}" Margin="0,2,0,0" TextWrapping="Wrap" />
+                    </StackPanel>
+                </Grid>
+                <WrapPanel Grid.Column="1" Margin="16,0,0,0" VerticalAlignment="Top">
+                    <Button Style="{StaticResource SettingsButton}" Content="Edit" Margin="0,0,8,0" Command="{Binding EditCommand}"
+                            AutomationProperties.Name="{Binding Title, StringFormat=Edit {0}}" />
+                    <Button Style="{StaticResource SettingsButton}" Content="Remove" Command="{Binding RemoveCommand}"
+                            AutomationProperties.Name="{Binding Title, StringFormat=Remove {0}}" />
+                </WrapPanel>
+            </Grid>
+            <StackPanel Margin="18,0,18,14" Visibility="{Binding ConfirmingRemove, Converter={StaticResource Settings.ShowWhenTrue}}">
+                <TextBlock Text="{Binding RemoveQuestion}" Style="{StaticResource Text.SettingsHeader}" FontWeight="Normal" TextWrapping="Wrap"
+                           AutomationProperties.LiveSetting="Assertive" />
+                <WrapPanel Margin="0,10,0,0">
+                    <Button Style="{StaticResource SettingsButton}" Content="Remove" Margin="0,0,8,0" Command="{Binding ConfirmRemoveCommand}"
+                            AutomationProperties.Name="{Binding Title, StringFormat='Yes, remove {0}'}" />
+                    <Button Style="{StaticResource SettingsButton}" Content="Keep" Command="{Binding KeepCommand}"
+                            AutomationProperties.Name="{Binding Title, StringFormat='No, keep {0}'}" />
+                </WrapPanel>
+            </StackPanel>
+            <StackPanel Margin="18,14,18,14" Visibility="{Binding IsEditing, Converter={StaticResource Settings.ShowWhenTrue}}">
+                <TextBlock Text="{Binding Title}" Style="{StaticResource Text.SettingsGroupHeader}" Margin="0,0,0,12" />
+                <TextBlock Text="Name" Style="{StaticResource Text.SettingsHeader}" />
+                <TextBox Style="{StaticResource PeopleTextBox}" Margin="0,6,0,12" Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}"
+                         AutomationProperties.Name="Name" />
+                <TextBlock Text="Also called" Style="{StaticResource Text.SettingsHeader}" />
+                <TextBox Style="{StaticResource PeopleTextBox}" Margin="0,6,0,12" Text="{Binding Aliases, UpdateSourceTrigger=PropertyChanged}"
+                         AutomationProperties.Name="Also called" />
+                <TextBlock Text="Relationship" Style="{StaticResource Text.SettingsHeader}" />
+                <TextBox Style="{StaticResource PeopleTextBox}" Margin="0,6,0,8" Text="{Binding Relationships, UpdateSourceTrigger=PropertyChanged}"
+                         AutomationProperties.Name="Relationship" />
+                <!-- The usual ones, a press each: added to the field, which can still be typed in. -->
+                <ItemsControl ItemsSource="{Binding Suggestions}" Margin="0,0,0,12" IsTabStop="False" Focusable="False" AutomationProperties.Name="Usual relationships">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <WrapPanel />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Button Style="{StaticResource SettingsButton}" Content="{Binding}" Margin="0,0,6,6" Padding="10,3"
+                                    Command="{Binding DataContext.AddRelationshipCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}" CommandParameter="{Binding}"
+                                    AutomationProperties.Name="{Binding StringFormat=Add the relationship {0}}" />
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+                <TextBlock Text="Ways to reach them" Style="{StaticResource Text.SettingsHeader}" />
+                <ItemsControl ItemsSource="{Binding Identifiers}" IsTabStop="False" Focusable="False" AutomationProperties.Name="Ways to reach them" />
+                <Button Style="{StaticResource SettingsButton}" Content="Add a way to reach them" HorizontalAlignment="Left" Margin="0,0,0,12"
+                        Command="{Binding AddIdentifierCommand}" AutomationProperties.Name="Add a way to reach them" />
+                <TextBlock Text="{Binding Message}" Style="{StaticResource Text.SettingsDescription}" Foreground="{StaticResource Brush.Settings.Error}" TextWrapping="Wrap"
+                           Margin="0,0,0,12" Visibility="{Binding HasMessage, Converter={StaticResource Settings.ShowWhenTrue}}" AutomationProperties.LiveSetting="Assertive" />
+                <WrapPanel>
+                    <Button Style="{StaticResource SettingsButton}" Content="Save" Margin="0,0,8,0" Command="{Binding SaveCommand}" AutomationProperties.Name="Save person" />
+                    <Button Style="{StaticResource SettingsButton}" Content="Cancel" Command="{Binding CancelCommand}" AutomationProperties.Name="Cancel editing" />
+                </WrapPanel>
+            </StackPanel>
+        </StackPanel>
+        <DataTemplate.Triggers>
+            <DataTrigger Binding="{Binding Path=(ItemsControl.AlternationIndex), RelativeSource={RelativeSource AncestorType=ContentPresenter}}" Value="0">
+                <Setter TargetName="Divider" Property="Visibility" Value="Collapsed" />
+            </DataTrigger>
+        </DataTemplate.Triggers>
+    </DataTemplate>
+
+    <!-- People: who the user has told the Assistant about, with a place to try a name. -->
+    <DataTemplate DataType="{x:Type settings:PeoplePage}">
+        <StackPanel>
+            <TextBlock Margin="8,0,8,12" Style="{StaticResource Text.SettingsDescription}" Foreground="{StaticResource Brush.Settings.Error}" TextWrapping="Wrap"
+                       Text="{Binding Notice}" Visibility="{Binding HasNotice, Converter={StaticResource Settings.ShowWhenTrue}}" AutomationProperties.LiveSetting="Assertive" />
+            <HeaderedContentControl Header="People" Style="{StaticResource SettingsGroup}"
+                                    Visibility="{Binding HasStore, Converter={StaticResource Settings.ShowWhenTrue}}">
+                <StackPanel>
+                    <TextBlock Margin="18,14,18,14" Style="{StaticResource Text.SettingsDescription}" Text="{Binding EmptyText}" TextWrapping="Wrap"
+                               Visibility="{Binding HasNoPeople, Converter={StaticResource Settings.ShowWhenTrue}}" />
+                    <ItemsControl ItemsSource="{Binding People}" AlternationCount="2147483647" IsTabStop="False" Focusable="False" AutomationProperties.Name="People" />
+                    <Button Style="{StaticResource SettingsButton}" Content="Add a person" HorizontalAlignment="Left" Margin="18,6,18,14" Command="{Binding AddCommand}"
+                            AutomationProperties.Name="Add a person" />
+                </StackPanel>
+            </HeaderedContentControl>
+            <HeaderedContentControl Header="Try a name" Style="{StaticResource SettingsGroup}"
+                                    Visibility="{Binding CanCheck, Converter={StaticResource Settings.ShowWhenTrue}}">
+                <controls:SettingsRow Header="Who is that?" Layout="Stacked">
+                    <controls:SettingsRow.Footer>
+                        <TextBlock Text="{Binding CheckResult}" Margin="0,8,0,0" Style="{StaticResource Text.SettingsDescription}" TextWrapping="Wrap"
+                                   Visibility="{Binding HasCheckResult, Converter={StaticResource Settings.ShowWhenTrue}}" AutomationProperties.LiveSetting="Polite"
+                                   AutomationProperties.Name="Who the Assistant takes that to be" />
+                    </controls:SettingsRow.Footer>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBox Style="{StaticResource PeopleTextBox}" Width="280" Text="{Binding CheckText, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="Name to try">
+                            <TextBox.InputBindings>
+                                <KeyBinding Key="Return" Command="{Binding CheckCommand}" />
+                            </TextBox.InputBindings>
+                        </TextBox>
+                        <Button Style="{StaticResource SettingsButton}" Content="Check" Margin="8,0,0,0" Command="{Binding CheckCommand}"
+                                AutomationProperties.Name="Check the name" />
+                    </StackPanel>
+                </controls:SettingsRow>
+            </HeaderedContentControl>
+        </StackPanel>
+    </DataTemplate>
+
+    <!-- One thing the Assistant remembers, in Settings > Memory: what it says and what kind of thing it is, with the buttons to rewrite a note and to forget anything;
+         while a note is rewritten, its field. The line above it is every item's but the first. -->
+    <DataTemplate DataType="{x:Type settings:MemoryItem}">
+        <StackPanel>
+            <Rectangle x:Name="Divider" Style="{StaticResource SettingsSeparator}" />
+            <Grid Margin="18,12,18,12" Visibility="{Binding IsShowing, Converter={StaticResource Settings.ShowWhenTrue}}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <StackPanel VerticalAlignment="Center">
+                    <TextBlock Text="{Binding Text}" Style="{StaticResource Text.SettingsHeader}" FontWeight="Normal" TextWrapping="Wrap" />
+                    <TextBlock Text="{Binding KindLabel}" Style="{StaticResource Text.SettingsDescription}" Margin="0,2,0,0" />
+                </StackPanel>
+                <WrapPanel Grid.Column="1" Margin="16,0,0,0" VerticalAlignment="Top">
+                    <Button Style="{StaticResource SettingsButton}" Content="Edit" Margin="0,0,8,0" Command="{Binding EditCommand}"
+                            Visibility="{Binding CanEdit, Converter={StaticResource Settings.ShowWhenTrue}}" AutomationProperties.Name="Edit this" />
+                    <Button Style="{StaticResource SettingsButton}" Content="Forget" Command="{Binding ForgetCommand}" AutomationProperties.Name="Forget this" />
+                </WrapPanel>
+            </Grid>
+            <StackPanel Margin="18,12,18,12" Visibility="{Binding IsEditing, Converter={StaticResource Settings.ShowWhenTrue}}">
+                <TextBox Style="{StaticResource PeopleTextBox}" MaxLength="300" Text="{Binding Text, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="What is remembered">
+                    <TextBox.InputBindings>
+                        <KeyBinding Key="Return" Command="{Binding SaveCommand}" />
+                        <KeyBinding Key="Escape" Command="{Binding CancelCommand}" />
+                    </TextBox.InputBindings>
+                </TextBox>
+                <TextBlock Margin="2,6,2,0" Style="{StaticResource Text.SettingsDescription}" TextWrapping="Wrap" Text="{Binding EditHint}"
+                           Visibility="{Binding HasEditHint, Converter={StaticResource Settings.ShowWhenTrue}}" />
+                <WrapPanel Margin="0,10,0,0">
+                    <Button Style="{StaticResource SettingsButton}" Content="Save" Margin="0,0,8,0" Command="{Binding SaveCommand}" AutomationProperties.Name="Save note" />
+                    <Button Style="{StaticResource SettingsButton}" Content="Cancel" Command="{Binding CancelCommand}" AutomationProperties.Name="Cancel editing" />
+                </WrapPanel>
+            </StackPanel>
+        </StackPanel>
+        <DataTemplate.Triggers>
+            <DataTrigger Binding="{Binding Path=(ItemsControl.AlternationIndex), RelativeSource={RelativeSource AncestorType=ContentPresenter}}" Value="0">
+                <Setter TargetName="Divider" Property="Visibility" Value="Collapsed" />
+            </DataTrigger>
+        </DataTemplate.Triggers>
+    </DataTemplate>
+
+    <!-- Memory: what the Assistant remembers for the user between conversations, with a place to add a note by hand. -->
+    <DataTemplate DataType="{x:Type settings:MemoryPage}">
+        <StackPanel>
+            <TextBlock Margin="8,0,8,12" Style="{StaticResource Text.SettingsDescription}" Foreground="{StaticResource Brush.Settings.Error}" TextWrapping="Wrap"
+                       Text="{Binding Notice}" Visibility="{Binding HasNotice, Converter={StaticResource Settings.ShowWhenTrue}}" AutomationProperties.LiveSetting="Assertive" />
+            <HeaderedContentControl Header="Remembered" Style="{StaticResource SettingsGroup}"
+                                    Visibility="{Binding HasStore, Converter={StaticResource Settings.ShowWhenTrue}}">
+                <StackPanel>
+                    <TextBlock Margin="18,14,18,14" Style="{StaticResource Text.SettingsDescription}" Text="{Binding EmptyText}" TextWrapping="Wrap"
+                               Visibility="{Binding HasNoItems, Converter={StaticResource Settings.ShowWhenTrue}}" />
+                    <ItemsControl ItemsSource="{Binding Items}" AlternationCount="2147483647" IsTabStop="False" Focusable="False" AutomationProperties.Name="Remembered" />
+                </StackPanel>
+            </HeaderedContentControl>
+            <HeaderedContentControl Header="Add a note" Style="{StaticResource SettingsGroup}"
+                                    Visibility="{Binding HasStore, Converter={StaticResource Settings.ShowWhenTrue}}">
+                <controls:SettingsRow Header="Something to remember" Layout="Stacked">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBox Style="{StaticResource PeopleTextBox}" Width="290" MaxLength="300" Text="{Binding NewText, UpdateSourceTrigger=PropertyChanged}"
+                                 AutomationProperties.Name="Note to add">
+                            <TextBox.InputBindings>
+                                <KeyBinding Key="Return" Command="{Binding AddCommand}" />
+                            </TextBox.InputBindings>
+                        </TextBox>
+                        <Button Style="{StaticResource SettingsButton}" Content="Add" Margin="8,0,0,0" Command="{Binding AddCommand}" AutomationProperties.Name="Add the note" />
+                    </StackPanel>
+                </controls:SettingsRow>
+            </HeaderedContentControl>
+        </StackPanel>
+    </DataTemplate>
+
+    <!-- A run of the agent or an action of the Assistant in Settings > Activity: when it happened, what it was, how it ended (and what the user answered when asked), where a run could
+         not go on, and the buttons that open its steps and stop a run that goes on. The steps are the same lines the panel in the conversation shows. The line above it is every
+         item's but the first. -->
+    <DataTemplate DataType="{x:Type settings:ActivityRow}">
+        <StackPanel>
+            <Rectangle x:Name="Divider" Style="{StaticResource SettingsSeparator}" />
+            <Grid Margin="18,14,18,14" AutomationProperties.Name="{Binding Text}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <StackPanel>
+                    <TextBlock Text="{Binding Title}" Style="{StaticResource Text.SettingsHeader}" TextWrapping="Wrap" />
+                    <TextBlock Text="{Binding Detail}" Style="{StaticResource Text.SettingsDescription}" Margin="0,2,0,0" TextWrapping="Wrap" />
+                    <TextBlock x:Name="Status" Text="{Binding StatusText}" Style="{StaticResource Text.SettingsDescription}" Margin="0,6,0,0" TextWrapping="Wrap" />
+                    <TextBlock Text="{Binding ConfirmationText}" Style="{StaticResource Text.SettingsDescription}" Margin="0,2,0,0" TextWrapping="Wrap"
+                               Visibility="{Binding HasConfirmation, Converter={StaticResource Settings.ShowWhenTrue}}" />
+                    <TextBlock Text="{Binding FailurePoint}" Style="{StaticResource Text.SettingsDescription}" Margin="0,6,0,0" TextWrapping="Wrap"
+                               Foreground="{StaticResource Brush.Settings.Warning}"
+                               Visibility="{Binding HasFailure, Converter={StaticResource Settings.ShowWhenTrue}}" />
+                </StackPanel>
+                <WrapPanel Grid.Column="1" Margin="16,0,0,0" VerticalAlignment="Top">
+                    <Button Style="{StaticResource SettingsButton}" Content="{Binding CancelLabel}" Margin="0,0,8,0" Command="{Binding CancelCommand}"
+                            Visibility="{Binding IsRunning, Converter={StaticResource Settings.ShowWhenTrue}}" AutomationProperties.Name="Cancel this task" />
+                    <Button Style="{StaticResource SettingsButton}" Content="{Binding ToggleLabel}" Command="{Binding ToggleCommand}"
+                            Visibility="{Binding HasSteps, Converter={StaticResource Settings.ShowWhenTrue}}" AutomationProperties.Name="{Binding ToggleLabel}" />
+                </WrapPanel>
+            </Grid>
+            <ItemsControl ItemsSource="{Binding Steps}" Margin="18,0,18,14" IsTabStop="False" Focusable="False" AutomationProperties.Name="Steps"
+                          Visibility="{Binding IsExpanded, Converter={StaticResource Settings.ShowWhenTrue}}" />
+        </StackPanel>
+        <DataTemplate.Triggers>
+            <DataTrigger Binding="{Binding Path=(ItemsControl.AlternationIndex), RelativeSource={RelativeSource AncestorType=ContentPresenter}}" Value="0">
+                <Setter TargetName="Divider" Property="Visibility" Value="Collapsed" />
+            </DataTrigger>
+            <DataTrigger Binding="{Binding IsDone}" Value="True">
+                <Setter TargetName="Status" Property="Foreground" Value="{StaticResource Brush.Settings.Good}" />
+            </DataTrigger>
+            <DataTrigger Binding="{Binding IsProblem}" Value="True">
+                <Setter TargetName="Status" Property="Foreground" Value="{StaticResource Brush.Settings.Warning}" />
+            </DataTrigger>
+        </DataTemplate.Triggers>
+    </DataTemplate>
+
+    <!-- Activity: the logs, newest first, ten to a page, with the buttons that clear them and the hours after which they are deleted. -->
+    <DataTemplate DataType="{x:Type settings:ActivityPage}">
+        <StackPanel>
+            <TextBlock Margin="8,0,8,12" Style="{StaticResource Text.SettingsDescription}" Foreground="{StaticResource Brush.Settings.Error}" TextWrapping="Wrap"
+                       Text="{Binding Notice}" Visibility="{Binding HasNotice, Converter={StaticResource Settings.ShowWhenTrue}}" AutomationProperties.LiveSetting="Assertive" />
+            <HeaderedContentControl Header="Logs" Style="{StaticResource SettingsGroup}"
+                                    Visibility="{Binding HasHistory, Converter={StaticResource Settings.ShowWhenTrue}}">
+                <StackPanel>
+                    <TextBlock Margin="18,14,18,14" Style="{StaticResource Text.SettingsDescription}" Text="{Binding EmptyText}" TextWrapping="Wrap"
+                               Visibility="{Binding HasNoItems, Converter={StaticResource Settings.ShowWhenTrue}}" />
+                    <ItemsControl ItemsSource="{Binding PageItems}" AlternationCount="2147483647" IsTabStop="False" Focusable="False" AutomationProperties.Name="Logs" />
+                    <StackPanel Visibility="{Binding HasPages, Converter={StaticResource Settings.ShowWhenTrue}}">
+                        <Rectangle Style="{StaticResource SettingsSeparator}" />
+                        <Grid Margin="18,10,18,12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <Button Style="{StaticResource SettingsButton}" Content="Previous" Command="{Binding PreviousPageCommand}" AutomationProperties.Name="Previous page of logs" />
+                            <TextBlock Grid.Column="1" Text="{Binding PageText}" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                       Style="{StaticResource Text.SettingsDescription}" AutomationProperties.LiveSetting="Polite" />
+                            <Button Grid.Column="2" Style="{StaticResource SettingsButton}" Content="Next" Command="{Binding NextPageCommand}" AutomationProperties.Name="Next page of logs" />
+                        </Grid>
+                    </StackPanel>
+                </StackPanel>
+            </HeaderedContentControl>
+            <HeaderedContentControl Header="Clear" Style="{StaticResource SettingsGroup}">
+                <StackPanel>
+                    <controls:SettingsRow Header="Clear logs">
+                        <controls:SettingsRow.Footer>
+                            <StackPanel Margin="0,10,0,0" Visibility="{Binding ConfirmingClear, Converter={StaticResource Settings.ShowWhenTrue}}">
+                                <TextBlock Text="{Binding ClearQuestion}" Style="{StaticResource Text.SettingsHeader}" FontWeight="Normal" TextWrapping="Wrap"
+                                           AutomationProperties.LiveSetting="Assertive" />
+                                <WrapPanel Margin="0,10,0,0">
+                                    <Button Style="{StaticResource SettingsButton}" Content="Clear" Margin="0,0,8,0" Command="{Binding ConfirmClearCommand}"
+                                            AutomationProperties.Name="Yes, clear the logs" />
+                                    <Button Style="{StaticResource SettingsButton}" Content="Keep" Command="{Binding KeepCommand}"
+                                            AutomationProperties.Name="No, keep the logs" />
+                                </WrapPanel>
+                            </StackPanel>
+                        </controls:SettingsRow.Footer>
+                        <Button Style="{StaticResource SettingsButton}" Content="Clear" Command="{Binding ClearCommand}" AutomationProperties.Name="Clear the logs" />
+                    </controls:SettingsRow>
+                    <Rectangle Style="{StaticResource SettingsSeparator}" />
+                    <controls:SettingsRow Header="Delete all logs after" Footer="{Binding LogHours}">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBox Style="{StaticResource SettingsTextBox}" Width="72" MaxLength="6"
+                                     Text="{Binding LogHours.Text, UpdateSourceTrigger=PropertyChanged}"
+                                     controls:SettingsField.IsInvalid="{Binding LogHours.HasError}"
+                                     AutomationProperties.Name="Hours before logs are deleted" />
+                            <TextBlock Margin="8,0,16,0" VerticalAlignment="Center" Style="{StaticResource Text.SettingsDescription}" Text="hours" />
+                            <CheckBox Style="{StaticResource SettingsToggle}" IsChecked="{Binding DeleteLogs}" AutomationProperties.Name="Delete all logs" />
+                        </StackPanel>
+                    </controls:SettingsRow>
+                </StackPanel>
+            </HeaderedContentControl>
+        </StackPanel>
+    </DataTemplate>
+    <!-- About. -->
+    <DataTemplate DataType="{x:Type settings:AboutPage}">
+        <HeaderedContentControl Header="Assistant" Style="{StaticResource SettingsGroup}">
+            <StackPanel>
+                <!-- Which build this is, and whether a newer one is out: the button asks GitHub for the project's latest release, and what it found is said
+                     under the row, with the release's page when there is a newer one. -->
+                <controls:SettingsRow Header="Version" Description="{Binding Version}">
+                    <controls:SettingsRow.Footer>
+                        <StackPanel Orientation="Horizontal" Margin="0,8,0,0"
+                                    Visibility="{Binding HasUpdateStatus, Converter={StaticResource Settings.ShowWhenTrue}}">
+                            <TextBlock x:Name="UpdateStatus" Text="{Binding UpdateStatus}" Style="{StaticResource Text.SettingsDescription}"
+                                       VerticalAlignment="Center" AutomationProperties.LiveSetting="Polite" />
+                            <Button Style="{StaticResource SettingsLinkButton}" Content="Open update page" Margin="10,0,0,0" Command="{Binding OpenUpdateCommand}"
+                                    Visibility="{Binding HasUpdate, Converter={StaticResource Settings.ShowWhenTrue}}"
+                                    AutomationProperties.Name="Open the update's page on GitHub" />
+                        </StackPanel>
+                    </controls:SettingsRow.Footer>
+                    <Button Style="{StaticResource SettingsButton}" Content="Check for updates" Command="{Binding CheckForUpdatesCommand}"
+                            Visibility="{Binding CanCheckForUpdates, Converter={StaticResource Settings.ShowWhenTrue}}"
+                            AutomationProperties.Name="Check for updates" />
+                </controls:SettingsRow>
+                <Rectangle Style="{StaticResource SettingsSeparator}" />
+                <controls:SettingsRow Header="Created by">
+                    <ItemsControl ItemsSource="{Binding Creators}" IsTabStop="False" AutomationProperties.Name="Created by">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate><StackPanel Orientation="Horizontal" /></ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Button Style="{StaticResource SettingsLinkButton}" Content="{Binding Name}" Margin="14,0,0,0"
+                                        Command="{Binding DataContext.OpenLinkCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                        CommandParameter="{Binding Url}" ToolTip="{Binding Url}" AutomationProperties.Name="{Binding Name}" />
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </controls:SettingsRow>
+                <Rectangle Style="{StaticResource SettingsSeparator}" />
+                <controls:SettingsRow Header="Data folder">
+                    <controls:SettingsRow.Footer>
+                        <TextBlock Text="{Binding DataFolder}" Margin="0,8,0,0" Style="{StaticResource Text.SettingsPath}" />
+                    </controls:SettingsRow.Footer>
+                </controls:SettingsRow>
+                <Rectangle Style="{StaticResource SettingsSeparator}" />
+                <controls:SettingsRow Header="Settings file">
+                    <controls:SettingsRow.Footer>
+                        <TextBlock Text="{Binding SettingsFile}" Margin="0,8,0,0" Style="{StaticResource Text.SettingsPath}" />
+                    </controls:SettingsRow.Footer>
+                </controls:SettingsRow>
+            </StackPanel>
+        </HeaderedContentControl>
+    </DataTemplate>
+</ResourceDictionary>

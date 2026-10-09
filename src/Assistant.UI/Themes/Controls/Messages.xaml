@@ -1,0 +1,461 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sys="clr-namespace:System;assembly=System.Runtime"
+                    xmlns:controls="clr-namespace:Assistant.UI.Controls"
+                    xmlns:messages="clr-namespace:Assistant.UI.Messages"
+                    xmlns:vm="clr-namespace:Assistant.UI.ViewModels">
+
+    <!-- The tokens these templates use. StaticResource cannot see sibling dictionaries in Theme.xaml, so each
+         control dictionary merges the token dictionaries it needs. -->
+    <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="../Tokens/Typography.xaml" />
+        <ResourceDictionary Source="../Tokens/Surfaces.xaml" />
+        <ResourceDictionary Source="../Tokens/States.xaml" />
+        <ResourceDictionary Source="../Tokens/Radii.xaml" />
+        <ResourceDictionary Source="../Tokens/Spacing.xaml" />
+        <ResourceDictionary Source="../Icons.xaml" />
+        <ResourceDictionary Source="IconButton.xaml" />
+        <ResourceDictionary Source="Menu.xaml" />
+    </ResourceDictionary.MergedDictionaries>
+
+    <!-- What a message's words offer under the right mouse button where they can be selected (the History window): Copy, for what is selected in that
+         block, and Select all, for all of it. A menu has one owner, so each block gets its own; it opens with its glass where the pointer is. -->
+    <ContextMenu x:Key="Message.TextMenu" x:Shared="False" Style="{StaticResource GlassMenu}" Placement="MousePoint"
+                 HorizontalOffset="-28" VerticalOffset="-26" AutomationProperties.Name="Text">
+        <MenuItem Style="{StaticResource GlassMenuItemPlain}" Header="Copy" Command="ApplicationCommands.Copy"
+                  CommandTarget="{Binding PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}" />
+        <MenuItem Style="{StaticResource GlassMenuItemPlain}" Header="Select all" Command="ApplicationCommands.SelectAll"
+                  CommandTarget="{Binding PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}" />
+    </ContextMenu>
+
+    <!-- Messages of a conversation, measured from the floating conversation reference, in DIPs; any conversation
+         (MessageTemplates) draws them. Messages are 40 apart. The user's sit in bubbles on the right, no wider than
+         about four fifths of the conversation; the assistant's are typed parts in order, prose as open text across its
+         full width and any rich cards among it. A card is 19.5 from neighboring prose (12 from another card) and
+         reaches 14 past the text on each side, so on the floating panel it is 16 from the panel's edges, like the
+         buttons. Its padding is 18 at the sides; above and below, it leaves
+         the reference's 31.5 over the first line's capitals and 36 under the last line's baseline, given Segoe UI's
+         line spacing. Spacing between paragraphs, headings and list items is provisional until a reference shows
+         them. -->
+    <Thickness x:Key="Message.Margin">0,0,0,40</Thickness>
+    <sys:Double x:Key="Message.BubbleMaxWidth">286</sys:Double>
+    <Thickness x:Key="Message.BubblePadding">12,6,12.5,8</Thickness>
+    <!-- Images the user attached sit above their bubble, on the right, each at its own proportions (never cropped or
+         padded, never enlarged), no wider than a bubble and no taller than Message.AttachmentMaxHeight, with rounded corners.
+         Provisional until a reference shows them. -->
+    <sys:Double x:Key="Message.AttachmentMaxHeight">240</sys:Double>
+    <Thickness x:Key="Message.AttachmentMargin">0,0,0,6</Thickness>
+    <CornerRadius x:Key="Message.AttachmentCornerRadius">14</CornerRadius>
+    <!-- Many images (more than two) the user attached are small square tiles, three across within a bubble's width (3 x 88 + 2 x 6 = 276 of 286),
+         wrapping below. Provisional until a reference shows them. -->
+    <sys:Double x:Key="Message.TileSize">88</sys:Double>
+    <Thickness x:Key="Message.TileMargin">6,0,0,6</Thickness>
+    <CornerRadius x:Key="Message.TileCornerRadius">12</CornerRadius>
+    <sys:Double x:Key="Message.BlockSpacing">12</sys:Double>
+    <sys:Double x:Key="Message.HeadingSpacing">22</sys:Double>
+    <sys:Double x:Key="Message.ListItemSpacing">6</sys:Double>
+    <sys:Double x:Key="Message.ListMarkerWidth">18</sys:Double>
+    <Thickness x:Key="Message.ListMarkerMargin">0,0,6,0</Thickness>
+    <sys:Double x:Key="Message.CardSpacing">19.5</sys:Double>
+    <Thickness x:Key="Message.CardPadding">18,26.5,18,30</Thickness>
+
+    <!-- A conversation view can measure its cards differently from the floating panel: how far a card reaches past the
+         text (Message.CardBleed), how far it is from prose (Message.CardSpacing) and its padding (Message.CardPadding)
+         are looked up where the message is drawn, so a view that sets its own in its resources changes them for its
+         messages alone. The History window's workspace does, from its larger reference. -->
+    <controls:ListIndentConverter x:Key="ListIndent" Indent="{StaticResource Message.ListMarkerWidth}" />
+
+    <!-- The frame of a rich card: black, with the panel's smooth corners. Only MessageCard content is framed. Each kind
+         of card supplies a DataTemplate for its type, drawn inside the frame's padding; a kind without one draws
+         nothing. -->
+    <Style x:Key="MessageCard" TargetType="ContentControl">
+        <Setter Property="Focusable" Value="False" />
+        <Setter Property="Background" Value="{StaticResource Brush.Surface.Card}" />
+        <Setter Property="Foreground" Value="{StaticResource Brush.Text.Message}" />
+        <Setter Property="Padding" Value="{DynamicResource Message.CardPadding}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ContentControl">
+                    <Grid>
+                        <controls:PanelShape x:Name="Surface" Fill="{TemplateBinding Background}"
+                                             CornerSize="{StaticResource Radius.Card}" />
+                        <ContentPresenter Margin="{TemplateBinding Padding}" />
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Kinds of content or card without a template of their own draw nothing, rather than their type's name. -->
+    <DataTemplate DataType="{x:Type messages:MessageCard}">
+        <Grid />
+    </DataTemplate>
+
+    <DataTemplate DataType="{x:Type messages:MessageContent}">
+        <Grid />
+    </DataTemplate>
+
+    <!-- One image the user attached, at its own proportions. -->
+    <DataTemplate x:Key="Message.AttachmentPicture" DataType="{x:Type messages:ImageItem}">
+        <!-- The grid takes the image's own size; the rounded border beside it masks its corners. -->
+        <Grid HorizontalAlignment="Right" Margin="{StaticResource Message.AttachmentMargin}"
+              AutomationProperties.Name="{Binding Name}">
+            <Grid.OpacityMask>
+                <VisualBrush Visual="{Binding ElementName=Mask}" />
+            </Grid.OpacityMask>
+            <Border x:Name="Mask" Background="White"
+                    CornerRadius="{StaticResource Message.AttachmentCornerRadius}" />
+            <Image Source="{Binding Thumbnail}" Stretch="Uniform" StretchDirection="DownOnly"
+                   MaxWidth="{StaticResource Message.BubbleMaxWidth}"
+                   MaxHeight="{StaticResource Message.AttachmentMaxHeight}"
+                   RenderOptions.BitmapScalingMode="HighQuality" />
+        </Grid>
+    </DataTemplate>
+
+    <!-- One of many (more than two) images the user attached: a small square tile, cropped around its center, with rounded corners. -->
+    <DataTemplate x:Key="Message.AttachmentTile" DataType="{x:Type messages:ImageItem}">
+        <Grid Width="{StaticResource Message.TileSize}" Height="{StaticResource Message.TileSize}"
+              Margin="{StaticResource Message.TileMargin}" ToolTip="{Binding Name}"
+              AutomationProperties.Name="{Binding Name}">
+            <Grid.OpacityMask>
+                <VisualBrush Visual="{Binding ElementName=TileMask}" />
+            </Grid.OpacityMask>
+            <Border x:Name="TileMask" Background="White" CornerRadius="{StaticResource Message.TileCornerRadius}" />
+            <Image Source="{Binding Thumbnail}" Stretch="UniformToFill" HorizontalAlignment="Center"
+                   VerticalAlignment="Center" RenderOptions.BitmapScalingMode="HighQuality" />
+        </Grid>
+    </DataTemplate>
+
+    <!-- The user's images, on the right: one or two at their own size, more as a grid of tiles that wraps at a bubble's width. -->
+    <Style x:Key="Message.AttachmentList" TargetType="ItemsControl">
+        <Setter Property="Focusable" Value="False" />
+        <Setter Property="HorizontalAlignment" Value="Right" />
+        <Setter Property="ItemTemplate" Value="{StaticResource Message.AttachmentPicture}" />
+        <Style.Triggers>
+            <DataTrigger Binding="{Binding HasManyPictures}" Value="True">
+                <Setter Property="ItemTemplate" Value="{StaticResource Message.AttachmentTile}" />
+                <Setter Property="ItemsPanel">
+                    <Setter.Value>
+                        <ItemsPanelTemplate>
+                            <WrapPanel MaxWidth="{StaticResource Message.BubbleMaxWidth}" />
+                        </ItemsPanelTemplate>
+                    </Setter.Value>
+                </Setter>
+            </DataTrigger>
+        </Style.Triggers>
+    </Style>
+
+    <!-- The user's message: the images, the documents and the pieces of text they attached, then their text as typed in a compact bubble, all on the
+         right. Each document is drawn as a small rounded chip with a file glyph and its name, one above the other above the bubble like the
+         images. Provisional until a reference shows one. -->
+    <DataTemplate x:Key="Message.User" DataType="{x:Type vm:MessageViewModel}">
+        <StackPanel HorizontalAlignment="Right" Margin="{StaticResource Message.Margin}">
+            <ItemsControl x:Name="Attachments" ItemsSource="{Binding Attachments}" Style="{StaticResource Message.AttachmentList}" />
+            <ItemsControl x:Name="Documents" ItemsSource="{Binding Documents}" HorizontalAlignment="Right" Focusable="False"
+                          AutomationProperties.Name="Attached files">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate DataType="{x:Type messages:DocumentAttachment}">
+                        <Border CornerRadius="{StaticResource Message.AttachmentCornerRadius}"
+                                Background="{StaticResource Brush.Surface.Bubble}" Padding="11,7,13,7"
+                                HorizontalAlignment="Right" Margin="{StaticResource Message.AttachmentMargin}"
+                                MaxWidth="{StaticResource Message.BubbleMaxWidth}"
+                                TextElement.Foreground="{StaticResource Brush.Text.Message}"
+                                AutomationProperties.Name="{Binding Name}">
+                            <StackPanel Orientation="Horizontal">
+                                <Path Style="{StaticResource IconGlyph}" StrokeThickness="1" Data="{StaticResource Icon.Document}"
+                                      Stretch="Uniform" Width="9.5" Height="12.2" VerticalAlignment="Center" Margin="0,0,7,0" />
+                                <TextBlock Style="{StaticResource Text.Caption}" Text="{Binding Name}"
+                                           Foreground="{StaticResource Brush.Text.Message}" TextTrimming="CharacterEllipsis"
+                                           VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+            <ItemsControl x:Name="TextAttachments" ItemsSource="{Binding TextAttachments}" HorizontalAlignment="Right"
+                          Focusable="False">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate DataType="{x:Type messages:TextAttachment}">
+                        <Border CornerRadius="{StaticResource Message.AttachmentCornerRadius}"
+                                Background="{StaticResource Brush.Surface.Bubble}" Padding="11,7,13,7"
+                                HorizontalAlignment="Right" Margin="{StaticResource Message.AttachmentMargin}"
+                                MaxWidth="{StaticResource Message.BubbleMaxWidth}"
+                                TextElement.Foreground="{StaticResource Brush.Text.Message}"
+                                AutomationProperties.Name="{Binding Name}">
+                            <StackPanel Orientation="Horizontal">
+                                <Path Style="{StaticResource IconGlyph}" StrokeThickness="1" Data="{StaticResource Icon.TextLines}"
+                                      Stretch="Uniform" Width="11" Height="9.2" VerticalAlignment="Center" Margin="0,0,7,0" />
+                                <TextBlock Style="{StaticResource Text.Caption}" Text="{Binding Name}"
+                                           Foreground="{StaticResource Brush.Text.Message}" TextTrimming="CharacterEllipsis"
+                                           VerticalAlignment="Center" />
+                                <!-- Page text around the selection went with it (step 88): said beside the words, so the user can see it. -->
+                                <TextBlock x:Name="NearbyMarker" Style="{StaticResource Text.Caption}" Text="+ nearby page text"
+                                           Foreground="{StaticResource Brush.Text.Message}" Opacity="0.7" Margin="8,0,0,0"
+                                           VerticalAlignment="Center" Visibility="Collapsed" />
+                            </StackPanel>
+                        </Border>
+                        <DataTemplate.Triggers>
+                            <DataTrigger Binding="{Binding HasNearbyContext}" Value="True">
+                                <Setter TargetName="NearbyMarker" Property="Visibility" Value="Visible" />
+                            </DataTrigger>
+                        </DataTemplate.Triggers>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+            <controls:SpeechBubble HorizontalAlignment="Right" MaxWidth="{StaticResource Message.BubbleMaxWidth}"
+                                   Background="{StaticResource Brush.Surface.Bubble}"
+                                   CornerRadius="{StaticResource Radius.Bubble}"
+                                   Padding="{StaticResource Message.BubblePadding}">
+                <controls:SelectableTextBlock Style="{StaticResource Text.MessageSmall}" Text="{Binding Text}" TextWrapping="Wrap" />
+            </controls:SpeechBubble>
+        </StackPanel>
+    </DataTemplate>
+
+    <!-- Parts of an assistant message, each drawn by what it is (Messages/MessageContent). Prose is the default and
+         is never boxed: its blocks are open text in the conversation's column. Only a card is framed, and the frame
+         reaches past the text column. Any other kind of part is drawn by the DataTemplate for its own type. -->
+    <DataTemplate x:Key="Content.Text" DataType="{x:Type messages:TextContent}">
+        <ItemsControl ItemsSource="{Binding Blocks}" Focusable="False">
+            <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <controls:MessageBlockPanel Spacing="{StaticResource Message.BlockSpacing}"
+                                                HeadingSpacing="{StaticResource Message.HeadingSpacing}" />
+                </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+        </ItemsControl>
+    </DataTemplate>
+
+    <DataTemplate x:Key="Content.Card" DataType="{x:Type messages:MessageCard}">
+        <ContentControl Style="{StaticResource MessageCard}" Content="{Binding}" Margin="{DynamicResource Message.CardBleed}" />
+    </DataTemplate>
+
+    <!-- A warning that some context (or of the conversation) did not fit what the model can read at once: a small amber
+         glyph and the words, in secondary text, in the text column. It is part of the answer's content, placed before
+         the model's words, and is neither prose nor a card. -->
+    <DataTemplate DataType="{x:Type messages:ContextWarningContent}">
+        <Grid AutomationProperties.Name="{Binding Text}">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition />
+            </Grid.ColumnDefinitions>
+            <Path Style="{StaticResource IconGlyph}" Stroke="{StaticResource Brush.Glyph.Warning}" StrokeThickness="1.2"
+                  Data="{StaticResource Icon.Warning}" Stretch="None" VerticalAlignment="Top" Margin="0,2,8,0" />
+            <ItemsControl Grid.Column="1" ItemsSource="{Binding Lines}" Focusable="False">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <TextBlock Style="{StaticResource Text.Caption}" Text="{Binding}" TextWrapping="Wrap"
+                                   Margin="0,0,0,4" />
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </Grid>
+    </DataTemplate>
+
+    <controls:MessageContentTemplateSelector x:Key="ContentTemplates"
+                                             Text="{StaticResource Content.Text}"
+                                             Card="{StaticResource Content.Card}" />
+
+    <!-- The buttons under an answer: small round ones with no disc of their own, a dim glyph, and the white state layer of every other button. The copy
+         button's glyph turns into a check mark for a moment once it is clicked; the button with three dots stays lit while the answer's workings are
+         open under it. -->
+    <SolidColorBrush x:Key="Brush.Message.ActionGlyph" Color="#A6FFFFFF" />
+    <Geometry x:Key="Icon.MessageMore">M 0,2 A 1.5,1.5 0 1 0 3,2 A 1.5,1.5 0 1 0 0,2 Z M 5.5,2 A 1.5,1.5 0 1 0 8.5,2 A 1.5,1.5 0 1 0 5.5,2 Z M 11,2 A 1.5,1.5 0 1 0 14,2 A 1.5,1.5 0 1 0 11,2 Z</Geometry>
+
+    <Style x:Key="Message.CopyButton" TargetType="Button">
+        <Setter Property="Width" Value="28" />
+        <Setter Property="Height" Value="28" />
+        <Setter Property="Foreground" Value="{StaticResource Brush.Message.ActionGlyph}" />
+        <Setter Property="FocusVisualStyle" Value="{StaticResource FocusVisual.Circle}" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Grid Background="Transparent">
+                        <Ellipse x:Name="StateLayer" Fill="Transparent" />
+                        <Path x:Name="CopyGlyph" Fill="{TemplateBinding Foreground}" Data="{StaticResource Icon.Copy}" Width="10" Height="12.5"
+                              Margin="0,0.5,1,0" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        <Path x:Name="CheckGlyph" Style="{StaticResource IconGlyph}" StrokeThickness="1.6" Data="{StaticResource Icon.Check}"
+                              Width="10" Height="8.7" Opacity="0" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="StateLayer" Property="Fill" Value="{StaticResource Brush.State.Hover}" />
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="StateLayer" Property="Fill" Value="{StaticResource Brush.State.Pressed}" />
+                        </Trigger>
+                        <EventTrigger RoutedEvent="ButtonBase.Click">
+                            <BeginStoryboard>
+                                <Storyboard>
+                                    <DoubleAnimationUsingKeyFrames Storyboard.TargetName="CopyGlyph" Storyboard.TargetProperty="Opacity">
+                                        <DiscreteDoubleKeyFrame KeyTime="0" Value="0" />
+                                        <DiscreteDoubleKeyFrame KeyTime="0:0:1.5" Value="1" />
+                                    </DoubleAnimationUsingKeyFrames>
+                                    <DoubleAnimationUsingKeyFrames Storyboard.TargetName="CheckGlyph" Storyboard.TargetProperty="Opacity">
+                                        <DiscreteDoubleKeyFrame KeyTime="0" Value="1" />
+                                        <DiscreteDoubleKeyFrame KeyTime="0:0:1.5" Value="0" />
+                                    </DoubleAnimationUsingKeyFrames>
+                                </Storyboard>
+                            </BeginStoryboard>
+                        </EventTrigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="Message.MoreButton" TargetType="ToggleButton">
+        <Setter Property="Width" Value="28" />
+        <Setter Property="Height" Value="28" />
+        <Setter Property="Foreground" Value="{StaticResource Brush.Message.ActionGlyph}" />
+        <Setter Property="FocusVisualStyle" Value="{StaticResource FocusVisual.Circle}" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ToggleButton">
+                    <Grid Background="Transparent">
+                        <Ellipse x:Name="OpenLayer" Fill="Transparent" />
+                        <Ellipse x:Name="StateLayer" Fill="Transparent" />
+                        <Path Fill="{TemplateBinding Foreground}" Data="{StaticResource Icon.MessageMore}" HorizontalAlignment="Center"
+                              VerticalAlignment="Center" />
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsChecked" Value="True">
+                            <Setter TargetName="OpenLayer" Property="Fill" Value="{StaticResource Brush.State.Hover}" />
+                            <Setter Property="Foreground" Value="White" />
+                        </Trigger>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="StateLayer" Property="Fill" Value="{StaticResource Brush.State.Hover}" />
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="StateLayer" Property="Fill" Value="{StaticResource Brush.State.Pressed}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- The assistant's message: its parts in order, 12 apart, or 19.5 between a card and prose. An answer the user
+         stopped ends with a dim note that says so, 12 below its last part (alone, if it was stopped before its first
+         words). Under it, once it has ended, the button that copies it, and beside that the button with three dots when the answer has workings: the
+         steps of what the Assistant did and the questions the user answered fold away where they stood (Fold) and open under the buttons when the
+         three dots are pressed, and close again on the next press. -->
+    <DataTemplate x:Key="Message.Assistant" DataType="{x:Type vm:MessageViewModel}">
+        <StackPanel Margin="{StaticResource Message.Margin}">
+            <ItemsControl x:Name="Parts" ItemsSource="{Binding Content}"
+                          ItemTemplateSelector="{StaticResource ContentTemplates}" Focusable="False">
+                <ItemsControl.ItemContainerStyle>
+                    <Style TargetType="ContentPresenter">
+                        <Setter Property="controls:Fold.FollowsTucked" Value="True" />
+                    </Style>
+                </ItemsControl.ItemContainerStyle>
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <controls:MessageBlockPanel Spacing="{StaticResource Message.BlockSpacing}"
+                                                    CardSpacing="{DynamicResource Message.CardSpacing}" />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+            </ItemsControl>
+            <TextBlock x:Name="StoppedNote" Style="{StaticResource Text.Caption}"
+                       Margin="0,12,0,0" Visibility="Collapsed" />
+            <StackPanel x:Name="Actions" Orientation="Horizontal" Margin="-8,6,0,-10" Visibility="Collapsed">
+                <Button x:Name="CopyAnswer" Style="{StaticResource Message.CopyButton}" Visibility="Collapsed"
+                        Command="{x:Static messages:MessageActions.Copy}" CommandParameter="{Binding}"
+                        ToolTip="Copy" AutomationProperties.Name="Copy this answer" />
+                <ToggleButton x:Name="More" Style="{StaticResource Message.MoreButton}" Visibility="Collapsed"
+                              IsChecked="{Binding IsDetailsOpen, Mode=TwoWay}"
+                              ToolTip="What was done" AutomationProperties.Name="Show what was done for this answer" />
+            </StackPanel>
+            <ItemsControl x:Name="Details" ItemsSource="{Binding Details}" Padding="0,18,0,0"
+                          ItemTemplateSelector="{StaticResource ContentTemplates}" Focusable="False"
+                          controls:Fold.IsOpen="{Binding IsDetailsOpen}" AutomationProperties.Name="What was done">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <controls:MessageBlockPanel Spacing="{StaticResource Message.BlockSpacing}"
+                                                    CardSpacing="{DynamicResource Message.CardSpacing}" />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+            </ItemsControl>
+        </StackPanel>
+        <DataTemplate.Triggers>
+            <DataTrigger Binding="{Binding HasActions}" Value="True">
+                <Setter TargetName="Actions" Property="Visibility" Value="Visible" />
+            </DataTrigger>
+            <DataTrigger Binding="{Binding CanCopy}" Value="True">
+                <Setter TargetName="CopyAnswer" Property="Visibility" Value="Visible" />
+            </DataTrigger>
+            <DataTrigger Binding="{Binding HasDetails}" Value="True">
+                <Setter TargetName="More" Property="Visibility" Value="Visible" />
+            </DataTrigger>
+            <DataTrigger Binding="{Binding Status}" Value="{x:Static vm:MessageStatus.Stopped}">
+                <Setter TargetName="StoppedNote" Property="Visibility" Value="Visible" />
+                <Setter TargetName="StoppedNote" Property="Text" Value="Stopped" />
+            </DataTrigger>
+            <DataTrigger Binding="{Binding Content.Count}" Value="0">
+                <Setter TargetName="StoppedNote" Property="Margin" Value="0" />
+            </DataTrigger>
+        </DataTemplate.Triggers>
+    </DataTemplate>
+
+    <!-- Tool results are for the model; the conversation shows tool activity separately. -->
+    <DataTemplate x:Key="Message.Hidden" DataType="{x:Type vm:MessageViewModel}">
+        <Grid Visibility="Collapsed" />
+    </DataTemplate>
+
+    <controls:MessageTemplateSelector x:Key="MessageTemplates"
+                                      User="{StaticResource Message.User}"
+                                      Assistant="{StaticResource Message.Assistant}"
+                                      Tool="{StaticResource Message.Hidden}" />
+
+    <!-- Blocks of an answer, found by their type. Their words can be selected where the view says so (SelectableTextBlock), block by block. -->
+    <DataTemplate DataType="{x:Type messages:ParagraphBlock}">
+        <controls:SelectableTextBlock Style="{StaticResource Text.Message}" messages:InlineText.Markdown="{Binding Text}"
+                                      TextWrapping="Wrap" />
+    </DataTemplate>
+
+    <DataTemplate DataType="{x:Type messages:HeadingBlock}">
+        <controls:SelectableTextBlock x:Name="Heading" Style="{StaticResource Text.Heading}" messages:InlineText.Markdown="{Binding Text}"
+                                      TextWrapping="Wrap"
+                                      AutomationProperties.HeadingLevel="Level3" />
+        <DataTemplate.Triggers>
+            <DataTrigger Binding="{Binding Level}" Value="1">
+                <Setter TargetName="Heading" Property="FontFamily" Value="{StaticResource Font.Display}" />
+                <Setter TargetName="Heading" Property="FontSize" Value="{StaticResource FontSize.Heading1}" />
+                <Setter TargetName="Heading" Property="AutomationProperties.HeadingLevel" Value="Level1" />
+            </DataTrigger>
+            <DataTrigger Binding="{Binding Level}" Value="2">
+                <Setter TargetName="Heading" Property="FontSize" Value="{StaticResource FontSize.Heading2}" />
+                <Setter TargetName="Heading" Property="AutomationProperties.HeadingLevel" Value="Level2" />
+            </DataTrigger>
+        </DataTemplate.Triggers>
+    </DataTemplate>
+
+    <!-- A list's items share one marker column, as wide as its widest marker, so their text lines up. Each level of
+         nesting moves an item one marker column to the right, under the text of the item above. -->
+    <DataTemplate DataType="{x:Type messages:ListBlock}">
+        <ItemsControl ItemsSource="{Binding Items}" Focusable="False" Grid.IsSharedSizeScope="True">
+            <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <controls:MessageBlockPanel Spacing="{StaticResource Message.ListItemSpacing}" />
+                </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+        </ItemsControl>
+    </DataTemplate>
+
+    <DataTemplate DataType="{x:Type messages:ListItemBlock}">
+        <Grid Margin="{Binding Depth, Converter={StaticResource ListIndent}}">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" MinWidth="{StaticResource Message.ListMarkerWidth}"
+                                  SharedSizeGroup="ListMarker" />
+                <ColumnDefinition />
+            </Grid.ColumnDefinitions>
+            <TextBlock x:Name="Marker" Style="{StaticResource Text.Message}" Text="{Binding Marker}"
+                       HorizontalAlignment="Right" Margin="{StaticResource Message.ListMarkerMargin}"
+                       Typography.NumeralAlignment="Tabular" />
+            <controls:SelectableTextBlock Grid.Column="1" Style="{StaticResource Text.Message}"
+                                          messages:InlineText.Markdown="{Binding Text}" TextWrapping="Wrap" />
+        </Grid>
+    </DataTemplate>
+
+</ResourceDictionary>

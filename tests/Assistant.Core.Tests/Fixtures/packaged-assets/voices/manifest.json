@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "groups": [
+    {
+      "id": "piper",
+      "files": [
+        {
+          "path": "espeak-ng-data/voices/en.txt",
+          "size": 18,
+          "sha256": "24986ae1127102d7a9ec66c47784e52283809f6508dc650e893aade4b38476bd"
+        },
+        {
+          "path": "models/en_US-test.onnx.json",
+          "size": 21,
+          "sha256": "34e7b54a2067fdaa12558e3b6a3b18dffa16b26cbbfa3501088e4262da66bc49"
+        },
+        {
+          "path": "piper.exe",
+          "size": 5,
+          "sha256": "26df4c2af3dbe844a31cf92a2bb2eb9588df08243b0d491b23b3e55fa21efb42"
+        }
+      ]
+    }
+  ]
+}

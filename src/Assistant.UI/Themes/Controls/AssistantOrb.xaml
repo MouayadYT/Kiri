@@ -1,0 +1,18 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:controls="clr-namespace:Assistant.UI.Controls">
+
+    <!-- The token this style uses. StaticResource cannot see sibling dictionaries in Theme.xaml, so each control
+         dictionary merges the token dictionaries it needs. -->
+    <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="../Tokens/Orb.xaml" />
+    </ResourceDictionary.MergedDictionaries>
+
+    <!-- The assistant orb: a drawn sphere with no template, sized by whatever hosts it. It casts the reference's soft
+         shadow beyond its bounds, so leave room around it. -->
+    <Style TargetType="controls:AssistantOrb">
+        <Setter Property="Shape" Value="{StaticResource Orb.Assistant}" />
+        <Setter Property="Focusable" Value="False" />
+    </Style>
+
+</ResourceDictionary>

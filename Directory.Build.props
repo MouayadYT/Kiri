@@ -1,0 +1,21 @@
+<Project>
+
+  <!-- Settings shared by every project in the solution (PROJECT_SPEC §5.8). -->
+  <PropertyGroup>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+  </PropertyGroup>
+
+  <!-- One System.Text.Json for every program. The app and its helper programs (the model host, the File Explorer entry, the browser
+       bridge, the Microsoft To Do server, the voice host) are published into one folder and so share one copy of each library.
+       Whisper.net, in Assistant.VoiceHost, needs System.Text.Json 10, which is therefore the copy in that folder. A program built
+       against the runtime's own version 8 is handed version 10 all the same, but its dependency manifest (*.deps.json) does not list
+       what version 10 itself needs (System.IO.Pipelines), so it fails the first time it reads JSON: the model host took that for its
+       owner hanging up, and no model could be loaded. Every project asks for the same version here, so every manifest agrees with
+       the folder; packaging\Build-Package.ps1 checks that they do. Raise this when a package the app uses asks for a newer one. -->
+  <ItemGroup>
+    <PackageReference Include="System.Text.Json" Version="10.0.2" />
+  </ItemGroup>
+
+</Project>

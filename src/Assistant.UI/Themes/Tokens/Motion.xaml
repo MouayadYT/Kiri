@@ -1,0 +1,63 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sys="clr-namespace:System;assembly=System.Runtime"
+                    xmlns:animation="clr-namespace:Assistant.UI.Animation">
+
+    <!-- How floating surfaces such as the Search or Ask bar arrive and leave: a quick fade while they grow from 96 %
+         and drop 8 DIPs into place, easing out; leaving reverses it, faster. Off when Windows animation effects are
+         off. -->
+    <animation:SurfaceMotion x:Key="Motion.FloatingSurface"
+                             ShowDuration="0:0:0.24" HideDuration="0:0:0.16"
+                             HiddenScale="0.96" HiddenOffsetY="-8" />
+
+    <!-- How the Search or Ask pill grows into the floating conversation: the glass eases from one form into the other
+         in 0.4 s. The typed text fades out by the time it is 40 % of the way there; the conversation then fades in,
+         fully shown by 90 %. Off when Windows animation effects are off. -->
+    <animation:SurfaceMorphMotion x:Key="Motion.SurfaceMorph" Duration="0:0:0.4"
+                                  CompactFadeOutEnd="0.4" ConversationFadeInStart="0.4" ConversationFadeInEnd="0.9" />
+
+    <!-- How the bar folds into the Working pill when a question is asked, measured from the answer reference (2x recording): it is
+         first pressed narrower (88 % as wide) for 65 ms, then springs into the pill, past it by about 1 % at 0.15 s, settling by
+         0.23 s. -->
+    <animation:SpringMotion x:Key="Motion.PillFold" DampingRatio="0.82" PeakTime="0:0:0.15" />
+    <sys:TimeSpan x:Key="Motion.PillPress">0:0:0.065</sys:TimeSpan>
+
+    <!-- How the Working pill opens into the conversation when the answer comes, measured from the same recording: a spring that
+         reaches its farthest, about 3.5 % of the way past the panel, at 0.37 s and settles by about 0.75 s. -->
+    <animation:SpringMotion x:Key="Motion.PillOpen" DampingRatio="0.73" PeakTime="0:0:0.37" />
+
+    <!-- How the pill widens or narrows when what it says changes ("Working" to "Looking into it"): eased, in 0.275 s. -->
+    <sys:TimeSpan x:Key="Motion.PillResize">0:0:0.275</sys:TimeSpan>
+
+    <!-- How the answer to a sum comes into the bar, measured from the calculator reference: the bar grows to hold it in 0.15 s,
+         easing out, and gives the room back at once (0.07 s) when what is typed stops being a sum. -->
+    <sys:TimeSpan x:Key="Motion.CalculationIn">0:0:0.15</sys:TimeSpan>
+    <sys:TimeSpan x:Key="Motion.CalculationOut">0:0:0.07</sys:TimeSpan>
+
+    <!-- How the panel under the bar takes a new height when what it lists changes while it is up (a letter typed or taken back): it eases to it,
+         as the reference's does, so that the glass never jumps under the rows. -->
+    <sys:TimeSpan x:Key="Motion.PanelResize">0:0:0.16</sys:TimeSpan>
+    <!-- How the panel under the bar arrives (the categories once the pointer moves, the results once the typing pauses), measured from the
+         reference frame by frame (120 a second): it grows down out of the bar, starting a little over half as wide and fading in evenly, both
+         done in about 0.17 s, while its own height goes from six tenths to all of it in about 0.26 s, so that its bottom edge is still
+         sliding down over the rows when they are there to read. -->
+    <sys:TimeSpan x:Key="Motion.PanelReveal">0:0:0.17</sys:TimeSpan>
+    <sys:Double x:Key="Motion.PanelRevealScale">0.55</sys:Double>
+    <sys:Double x:Key="Motion.PanelRevealHeight">0.6</sys:Double>
+    <sys:TimeSpan x:Key="Motion.PanelRevealGrow">0:0:0.26</sys:TimeSpan>
+    <!-- How many frames later than the panel's glass its blur is moved while the panel arrives. The blur is a window of its own, which Windows
+         moves at once, while what the panel's window draws reaches the screen about two frames later (measured on recordings of the screen:
+         moved together, the blur's edge ran 25 to 30 ms ahead of the glass's, a second outline around the panel as it widened; held three
+         frames, it trailed inside it). -->
+    <sys:Int32 x:Key="Motion.PanelBlurLag">2</sys:Int32>
+
+    <!-- How the Searching indicator's droplets circulate (Controls/SearchingIndicator): six droplets 60 degrees apart
+         on a ring that never turns, each a soft egg 3.4 DIPs long that swells to 6.5 as the size emphasis passes it, once
+         around every 1.3 s. The reference's droplets measure 6.4 px at the base and 12 px at the peak at 2x, and the
+         ring's radius is 18.5 px. The emphasis eases down over three droplets ahead of it and drops over one and a
+         fifth behind it, as in the reference's still. RestPeak is the pose held with animation effects off. -->
+    <animation:DropletRingMotion x:Key="Motion.SearchingRing" Count="6" Lap="0:0:1.3"
+                                 BaseLength="3.4" PeakLength="6.5" RingRadius="9.25" Elongation="1.16"
+                                 FirstAngle="-8" RestPeak="4.5" AheadReach="2.5" BehindReach="1.2" />
+
+</ResourceDictionary>

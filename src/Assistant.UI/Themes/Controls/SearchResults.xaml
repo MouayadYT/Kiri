@@ -1,0 +1,550 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sys="clr-namespace:System;assembly=System.Runtime"
+                    xmlns:controls="clr-namespace:Assistant.UI.Controls"
+                    xmlns:vm="clr-namespace:Assistant.UI.ViewModels">
+
+    <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="../Tokens/Typography.xaml" />
+        <ResourceDictionary Source="../Tokens/Surfaces.xaml" />
+        <ResourceDictionary Source="Menu.xaml" />
+    </ResourceDictionary.MergedDictionaries>
+
+    <!-- The search results' rows, measured from the Search reference in DIPs, from the panel's left edge. A row is 62
+         tall, or 82 with a larger icon, and fills the panel's width; rows of a section touch, and sections are 2 apart.
+         The icon, 36 across (50 when larger, which takes 7 from each side of its 36-wide column), is centered 43.5 in,
+         and the words begin 79.5 in (84.5 with the larger icon). The highlighted row is a pill 12 in from each side, like the launcher's; a note at the right ends 29 in, and a long subtitle is cut short there too,
+         and a highlighted row's action, its words and then its key cap, ends 19.5 in. -->
+    <sys:Double x:Key="SearchResult.RowHeight">62</sys:Double>
+    <sys:Double x:Key="SearchResult.RowHeightLarge">82</sys:Double>
+    <Thickness x:Key="SearchResult.HighlightMargin">12,0,12,0</Thickness>
+    <Thickness x:Key="SearchResult.ContentMargin">25.5,0,19.5,0</Thickness>
+    <sys:Double x:Key="SearchResult.IconSize">36</sys:Double>
+    <sys:Double x:Key="SearchResult.IconSizeLarge">50</sys:Double>
+    <Thickness x:Key="SearchResult.IconMarginLarge">-7,0,-7,0</Thickness>
+    <sys:Double x:Key="SearchResult.BadgeSize">13</sys:Double>
+    <Thickness x:Key="SearchResult.BadgeMargin">0,0,-1.5,-1.5</Thickness>
+    <Thickness x:Key="SearchResult.TextMargin">17.75,4,0,0</Thickness>
+    <Thickness x:Key="SearchResult.TextMarginSingle">17.75,1,0,0</Thickness>
+    <Thickness x:Key="SearchResult.TextMarginLarge">22.5,0,0,1.8</Thickness>
+    <Thickness x:Key="SearchResult.TextInset">0,0,0,0</Thickness>
+    <Thickness x:Key="SearchResult.DetailMargin">8,0,9.5,0</Thickness>
+    <Thickness x:Key="SearchResult.SubtitleMargin">0,0,9.5,0</Thickness>
+    <Thickness x:Key="SearchResult.ActionTextMargin">0,0,8,0</Thickness>
+    <Thickness x:Key="SearchResult.SecondaryActionMargin">12,0,0,0</Thickness>
+    <Thickness x:Key="SearchResult.ActionTextInset">0,0,0,1</Thickness>
+    <Thickness x:Key="SearchResult.SectionMargin">0,0,0,2</Thickness>
+    <Thickness x:Key="SearchResult.SectionHeaderMargin">26,10,26,2</Thickness>
+
+    <!-- The Messages bubble is drawn a fifth larger than its outline, as it fills more of its tile in the reference. -->
+    <ScaleTransform x:Key="SearchResult.BubbleScale" ScaleX="1.2" ScaleY="1.2" />
+
+    <!-- An icon lifts off the glass with a soft shadow under it, as an application's does in the reference. -->
+    <DropShadowEffect x:Key="SearchResult.IconShadow" BlurRadius="5" ShadowDepth="1.5" Direction="270" Opacity="0.28"
+                      Color="#000000" />
+
+    <!-- The icons a kind has when its result brings none of its own, drawn 36 x 36 and scaled to the row's icon. An
+         application's own icon is a rounded tile with its corners at 0.225 of its size. -->
+    <DataTemplate x:Key="Result.Icon.App">
+        <Grid Width="36" Height="36">
+            <Border CornerRadius="8.2">
+                <Border.Background>
+                    <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                        <GradientStop Offset="0" Color="#FFFFFF" />
+                        <GradientStop Offset="1" Color="#E2E4EA" />
+                    </LinearGradientBrush>
+                </Border.Background>
+            </Border>
+            <Canvas Width="36" Height="36">
+                <Rectangle Canvas.Left="9" Canvas.Top="9" Width="8" Height="8" RadiusX="2" RadiusY="2" Fill="#3E7BFA" />
+                <Rectangle Canvas.Left="19" Canvas.Top="9" Width="8" Height="8" RadiusX="2" RadiusY="2" Fill="#7FA8FB" />
+                <Rectangle Canvas.Left="9" Canvas.Top="19" Width="8" Height="8" RadiusX="2" RadiusY="2" Fill="#7FA8FB" />
+                <Rectangle Canvas.Left="19" Canvas.Top="19" Width="8" Height="8" RadiusX="2" RadiusY="2" Fill="#3E7BFA" />
+            </Canvas>
+        </Grid>
+    </DataTemplate>
+
+    <DataTemplate x:Key="Result.Icon.File">
+        <Grid Width="36" Height="36">
+            <Border CornerRadius="8.2">
+                <Border.Background>
+                    <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                        <GradientStop Offset="0" Color="#F6F7FA" />
+                        <GradientStop Offset="1" Color="#D3D7E0" />
+                    </LinearGradientBrush>
+                </Border.Background>
+            </Border>
+            <Path Fill="#7C8AA5" Data="M 11.5,8 H 19.5 L 25,13.5 V 26.5 A 1.5,1.5 0 0 1 23.5,28 H 12.5 A 1.5,1.5 0 0 1 11,26.5 V 9.5 A 1.5,1.5 0 0 1 11.5,8 Z" />
+            <Path Fill="#B9C2D3" Data="M 19.5,8 V 12 A 1.5,1.5 0 0 0 21,13.5 H 25 Z" />
+            <Path Stroke="#FFFFFF" StrokeThickness="1.2" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                  Data="M 14.5,19 H 21.5 M 14.5,22 H 21.5 M 14.5,25 H 18.5" />
+        </Grid>
+    </DataTemplate>
+
+    <DataTemplate x:Key="Result.Icon.Folder">
+        <Grid Width="36" Height="36">
+            <Border CornerRadius="8.2">
+                <Border.Background>
+                    <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                        <GradientStop Offset="0" Color="#8FC4FF" />
+                        <GradientStop Offset="1" Color="#4E8EF0" />
+                    </LinearGradientBrush>
+                </Border.Background>
+            </Border>
+            <Path Fill="#FFFFFF" Opacity="0.55"
+                  Data="M 8.5,12.5 A 2,2 0 0 1 10.5,10.5 H 15.3 L 17.6,13 H 25.5 A 2,2 0 0 1 27.5,15 V 16 H 8.5 Z" />
+            <Path Fill="#FFFFFF"
+                  Data="M 8.5,15.5 H 27.5 V 24.5 A 2,2 0 0 1 25.5,26.5 H 10.5 A 2,2 0 0 1 8.5,24.5 Z" />
+        </Grid>
+    </DataTemplate>
+
+    <DataTemplate x:Key="Result.Icon.Action">
+        <Grid Width="36" Height="36">
+            <Border CornerRadius="8.2">
+                <Border.Background>
+                    <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                        <GradientStop Offset="0" Color="#FFB340" />
+                        <GradientStop Offset="1" Color="#FF7A00" />
+                    </LinearGradientBrush>
+                </Border.Background>
+            </Border>
+            <Path Fill="#FFFFFF" StrokeLineJoin="Round" Stroke="#FFFFFF" StrokeThickness="1"
+                  Data="M 20.5,7.5 L 11.5,20 H 17.5 L 15.5,28.5 L 25,15.5 H 18.8 Z" />
+        </Grid>
+    </DataTemplate>
+
+    <DataTemplate x:Key="Result.Icon.Contact">
+        <Grid Width="36" Height="36">
+            <Ellipse>
+                <Ellipse.Fill>
+                    <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                        <GradientStop Offset="0" Color="#C9CDD7" />
+                        <GradientStop Offset="1" Color="#8F95A3" />
+                    </LinearGradientBrush>
+                </Ellipse.Fill>
+            </Ellipse>
+            <Ellipse Width="11" Height="11" Fill="#FFFFFF" HorizontalAlignment="Center" VerticalAlignment="Top"
+                     Margin="0,7,0,0" />
+            <Path Fill="#FFFFFF" Data="M 7,32 C 7,24.5 12,21.5 18,21.5 C 24,21.5 29,24.5 29,32 Z" />
+        </Grid>
+    </DataTemplate>
+
+    <DataTemplate x:Key="Result.Icon.Message">
+        <Grid Width="36" Height="36">
+            <Border CornerRadius="8.2">
+                <Border.Background>
+                    <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                        <GradientStop Offset="0" Color="#84EC7B" />
+                        <GradientStop Offset="1" Color="#5DCA50" />
+                    </LinearGradientBrush>
+                </Border.Background>
+            </Border>
+            <Path Fill="#F7FFF7" RenderTransformOrigin="0.5,0.5"
+                  RenderTransform="{StaticResource SearchResult.BubbleScale}"
+                  Data="M 18,9 C 12.5,9 8,12.6 8,17 C 8,19.6 9.6,21.9 12,23.4 C 11.8,25 10.8,26.4 9.5,27.3 C 12,27.4 14.3,26.5 15.7,25.3 C 16.4,25.4 17.2,25.5 18,25.5 C 23.5,25.5 28,21.9 28,17.4 C 28,12.6 23.5,9 18,9 Z" />
+        </Grid>
+    </DataTemplate>
+
+    <DataTemplate x:Key="Result.Icon.Clipboard">
+        <Grid Width="36" Height="36">
+            <Border CornerRadius="8.2">
+                <Border.Background>
+                    <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                        <GradientStop Offset="0" Color="#B9C4D6" />
+                        <GradientStop Offset="1" Color="#7D8BA3" />
+                    </LinearGradientBrush>
+                </Border.Background>
+            </Border>
+            <Path Fill="#FFFFFF" Data="M 11.5,10.5 A 1.5,1.5 0 0 1 13,9 H 23 A 1.5,1.5 0 0 1 24.5,10.5 V 26.5 A 1.5,1.5 0 0 1 23,28 H 13 A 1.5,1.5 0 0 1 11.5,26.5 Z" />
+            <Path Fill="#5C6B85" Data="M 14.5,8 H 21.5 A 1,1 0 0 1 22.5,9 V 11.5 A 1,1 0 0 1 21.5,12.5 H 14.5 A 1,1 0 0 1 13.5,11.5 V 9 A 1,1 0 0 1 14.5,8 Z" />
+            <Path Stroke="#8794AB" StrokeThickness="1.2" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                  Data="M 14.5,17 H 21.5 M 14.5,20.2 H 21.5 M 14.5,23.4 H 18.5" />
+        </Grid>
+    </DataTemplate>
+
+    <DataTemplate x:Key="Result.Icon.Knowledge">
+        <Grid Width="36" Height="36">
+            <Ellipse>
+                <Ellipse.Fill>
+                    <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                        <GradientStop Offset="0" Color="#7AB8FF" />
+                        <GradientStop Offset="1" Color="#3B7EF2" />
+                    </LinearGradientBrush>
+                </Ellipse.Fill>
+            </Ellipse>
+            <Path Stroke="#FFFFFF" StrokeThickness="1.4" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                  Data="M 8,18 H 28 M 18,8 C 13.5,12.5 13.5,23.5 18,28 M 18,8 C 22.5,12.5 22.5,23.5 18,28 M 18,8 A 10,10 0 1 0 18.01,8" />
+        </Grid>
+    </DataTemplate>
+
+    <!-- The marks that sit on an icon's corner, drawn 13.5 x 13.5: where an item came from, what a message is in, a
+         settings gear. -->
+    <DataTemplate x:Key="Result.Badge.Phone">
+        <Grid Width="13.5" Height="13.5">
+            <Border CornerRadius="3.4" Background="#B3574848" />
+            <Rectangle Width="5.2" Height="8.6" RadiusX="1.3" RadiusY="1.3" Stroke="#F2DADA" StrokeThickness="0.9"
+                       HorizontalAlignment="Center" VerticalAlignment="Center" />
+        </Grid>
+    </DataTemplate>
+
+    <DataTemplate x:Key="Result.Badge.Settings">
+        <Grid Width="13.5" Height="13.5">
+            <Border CornerRadius="3.4">
+                <Border.Background>
+                    <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                        <GradientStop Offset="0" Color="#C6C6CB" />
+                        <GradientStop Offset="1" Color="#8E8E94" />
+                    </LinearGradientBrush>
+                </Border.Background>
+            </Border>
+            <Path Stroke="#4A4A50" StrokeThickness="0.9" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                  Data="M 6.75,3 V 4.2 M 6.75,9.3 V 10.5 M 3,6.75 H 4.2 M 9.3,6.75 H 10.5 M 4.1,4.1 L 5,5 M 8.5,8.5 L 9.4,9.4 M 9.4,4.1 L 8.5,5 M 5,8.5 L 4.1,9.4 M 8.9,6.75 A 2.15,2.15 0 1 1 8.89,6.75" />
+        </Grid>
+    </DataTemplate>
+
+    <DataTemplate x:Key="Result.Badge.Messages">
+        <Grid Width="13.5" Height="13.5">
+            <Border CornerRadius="3.4">
+                <Border.Background>
+                    <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                        <GradientStop Offset="0" Color="#84EC7B" />
+                        <GradientStop Offset="1" Color="#5DCA50" />
+                    </LinearGradientBrush>
+                </Border.Background>
+            </Border>
+            <Path Fill="#F7FFF7" RenderTransformOrigin="0.5,0.5"
+                  RenderTransform="{StaticResource SearchResult.BubbleScale}"
+                  Data="M 6.75,3.2 C 4.6,3.2 2.9,4.6 2.9,6.3 C 2.9,7.3 3.5,8.2 4.5,8.8 C 4.4,9.4 4,9.9 3.6,10.2 C 4.5,10.2 5.4,9.9 5.9,9.4 C 6.2,9.5 6.5,9.5 6.75,9.5 C 8.9,9.5 10.6,8.1 10.6,6.4 C 10.6,4.6 8.9,3.2 6.75,3.2 Z" />
+        </Grid>
+    </DataTemplate>
+
+    <!-- The avatar of the people in a conversation: a group's cluster of discs sits on a translucent one, a person without
+         a photo is initials on a periwinkle disc, measured from the Messages reference. -->
+    <Style TargetType="controls:AvatarView">
+        <Setter Property="ClusterBrush" Value="{StaticResource Brush.Surface.AvatarCluster}" />
+        <Setter Property="InitialsBrush" Value="{StaticResource Brush.Surface.AvatarInitials}" />
+        <Setter Property="Foreground" Value="{StaticResource Brush.Text.ResultPrimary}" />
+        <Setter Property="FontFamily" Value="{StaticResource Font.Text}" />
+    </Style>
+
+    <!-- An icon or a badge is either a glyph the theme draws or a picture that came with its result. A picture is drawn
+         as it is, or, for a contact's photo, cropped to a disc. -->
+    <DataTemplate DataType="{x:Type vm:SearchResultIcon}">
+        <Grid>
+            <Image x:Name="Picture" Source="{Binding Image}" Stretch="Uniform" />
+            <Ellipse x:Name="Disc" Visibility="Collapsed">
+                <Ellipse.Fill>
+                    <ImageBrush ImageSource="{Binding Image}" Stretch="UniformToFill" />
+                </Ellipse.Fill>
+            </Ellipse>
+            <controls:AvatarView x:Name="Avatar" Participants="{Binding Participants}" Visibility="Collapsed" />
+            <Viewbox Stretch="Uniform">
+                <ContentPresenter Content="{Binding}"
+                                  ContentTemplate="{Binding GlyphKey, Converter={x:Static controls:GlyphTemplateConverter.Instance}}" />
+            </Viewbox>
+        </Grid>
+        <DataTemplate.Triggers>
+            <DataTrigger Binding="{Binding Shape}" Value="Circle">
+                <Setter TargetName="Picture" Property="Visibility" Value="Collapsed" />
+                <Setter TargetName="Disc" Property="Visibility" Value="Visible" />
+            </DataTrigger>
+            <DataTrigger Binding="{Binding HasParticipants}" Value="True">
+                <Setter TargetName="Avatar" Property="Visibility" Value="Visible" />
+            </DataTrigger>
+        </DataTemplate.Triggers>
+    </DataTemplate>
+
+    <DataTemplate DataType="{x:Type vm:SearchResultBadge}">
+        <Grid Width="{StaticResource SearchResult.BadgeSize}" Height="{StaticResource SearchResult.BadgeSize}"
+              Margin="1.5,0,0,0">
+            <Image Source="{Binding Image}" Stretch="Uniform" />
+            <Viewbox Stretch="Uniform">
+                <ContentPresenter Content="{Binding}"
+                                  ContentTemplate="{Binding GlyphKey, Converter={x:Static controls:GlyphTemplateConverter.Instance}}" />
+            </Viewbox>
+        </Grid>
+    </DataTemplate>
+
+    <!-- A search result's row, for any kind of result. -->
+    <Style TargetType="controls:SearchResultRow">
+        <Setter Property="Focusable" Value="False" />
+        <Setter Property="Height" Value="{StaticResource SearchResult.RowHeight}" />
+        <Setter Property="AutomationProperties.Name" Value="{Binding Title, RelativeSource={RelativeSource Self}}" />
+        <Setter Property="AutomationProperties.HelpText" Value="{Binding Subtitle, RelativeSource={RelativeSource Self}}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="controls:SearchResultRow">
+                    <Grid Background="Transparent">
+                        <controls:PillShape x:Name="Highlight" Margin="{StaticResource SearchResult.HighlightMargin}" />
+                        <Grid Margin="{StaticResource SearchResult.ContentMargin}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+
+                            <!-- The icon and its badges, centered in its slot. -->
+                            <Grid x:Name="IconHost" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                  Width="{StaticResource SearchResult.IconSize}" Height="{StaticResource SearchResult.IconSize}">
+                                <ContentPresenter x:Name="Icon" Content="{TemplateBinding Icon}"
+                                                  Effect="{StaticResource SearchResult.IconShadow}" />
+                                <ItemsControl x:Name="Badges" ItemsSource="{TemplateBinding Badges}" Focusable="False"
+                                              IsTabStop="False" HorizontalAlignment="Right" VerticalAlignment="Bottom"
+                                              Margin="{StaticResource SearchResult.BadgeMargin}">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <StackPanel Orientation="Horizontal" />
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                </ItemsControl>
+                            </Grid>
+
+                            <!-- The words: a title, with a note at its right, and a subtitle under it. -->
+                            <Grid x:Name="Text" Grid.Column="1" VerticalAlignment="Center"
+                                  Margin="{StaticResource SearchResult.TextMargin}">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+                                <TextBlock x:Name="Title" Text="{TemplateBinding Title}" TextTrimming="CharacterEllipsis"
+                                           Padding="{StaticResource SearchResult.TextInset}"
+                                           FontFamily="{StaticResource Font.Text}" FontWeight="Bold"
+                                           FontSize="{StaticResource FontSize.ResultTwoLineTitle}"
+                                           Foreground="{StaticResource Brush.Text.ResultPrimary}"
+                                           LineHeight="{StaticResource LineHeight.ResultLine}"
+                                           LineStackingStrategy="BlockLineHeight" />
+                                <TextBlock x:Name="Detail" Grid.Column="1" Text="{TemplateBinding Detail}"
+                                           Margin="{StaticResource SearchResult.DetailMargin}"
+                                           FontFamily="{StaticResource Font.Text}"
+                                           FontSize="{StaticResource FontSize.ResultDetail}"
+                                           Foreground="{StaticResource Brush.Text.ResultSecondary}"
+                                           LineHeight="{StaticResource LineHeight.ResultLine}"
+                                           LineStackingStrategy="BlockLineHeight" />
+                                <TextBlock x:Name="Subtitle" Grid.Row="1" Grid.ColumnSpan="2" Text="{TemplateBinding Subtitle}"
+                                           Margin="{StaticResource SearchResult.SubtitleMargin}"
+                                           TextTrimming="CharacterEllipsis"
+                                           FontFamily="{StaticResource Font.Text}"
+                                           FontSize="{StaticResource FontSize.ResultSubtitle}"
+                                           Foreground="{StaticResource Brush.Text.ResultSecondary}"
+                                           LineHeight="{StaticResource LineHeight.ResultLine}"
+                                           LineStackingStrategy="BlockLineHeight" />
+                            </Grid>
+
+                            <!-- What a highlighted row offers: its words and the cap of the key that does it, and, when it has other
+                                 things it can do, the words and the cap of the key that lists them. -->
+                            <StackPanel x:Name="Action" Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center"
+                                        Visibility="Collapsed">
+                                <StackPanel x:Name="PrimaryAction" Orientation="Horizontal" VerticalAlignment="Center">
+                                    <TextBlock x:Name="ActionText" Text="{TemplateBinding ActionText}"
+                                               Margin="{StaticResource SearchResult.ActionTextMargin}"
+                                               Padding="{StaticResource SearchResult.ActionTextInset}"
+                                               VerticalAlignment="Center"
+                                               FontFamily="{StaticResource Font.Text}"
+                                               FontSize="{StaticResource FontSize.ResultAction}"
+                                               Foreground="{StaticResource Brush.Text.ResultSecondary}" />
+                                    <Border x:Name="ActionCap" Height="20" MinWidth="28" CornerRadius="5.5"
+                                            VerticalAlignment="Center" Background="{StaticResource Brush.Surface.ResultKey}">
+                                        <TextBlock Text="{TemplateBinding ActionKey}" Margin="5.5,0,5.5,1"
+                                                   HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                   FontFamily="{StaticResource Font.Text}" FontWeight="SemiBold"
+                                                   FontSize="{StaticResource FontSize.ResultKey}"
+                                                   Foreground="{StaticResource Brush.Text.ResultPrimary}" />
+                                    </Border>
+                                </StackPanel>
+                                <StackPanel x:Name="SecondaryAction" Orientation="Horizontal" VerticalAlignment="Center"
+                                            Margin="{StaticResource SearchResult.SecondaryActionMargin}">
+                                    <TextBlock x:Name="SecondaryActionText" Text="{TemplateBinding SecondaryActionText}"
+                                               Margin="{StaticResource SearchResult.ActionTextMargin}"
+                                               Padding="{StaticResource SearchResult.ActionTextInset}"
+                                               VerticalAlignment="Center"
+                                               FontFamily="{StaticResource Font.Text}"
+                                               FontSize="{StaticResource FontSize.ResultAction}"
+                                               Foreground="{StaticResource Brush.Text.ResultSecondary}" />
+                                    <Border x:Name="SecondaryActionCap" Height="20" MinWidth="28" CornerRadius="5.5"
+                                            VerticalAlignment="Center" Background="{StaticResource Brush.Surface.ResultKey}">
+                                        <TextBlock Text="{TemplateBinding SecondaryActionKey}" Margin="5.5,0,5.5,1"
+                                                   HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                   FontFamily="{StaticResource Font.Text}" FontWeight="SemiBold"
+                                                   FontSize="{StaticResource FontSize.ResultKey}"
+                                                   Foreground="{StaticResource Brush.Text.ResultPrimary}" />
+                                    </Border>
+                                </StackPanel>
+                            </StackPanel>
+                        </Grid>
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <!-- Alone on its row, a title is the larger, medium one. -->
+                        <Trigger Property="Subtitle" Value="">
+                            <Setter TargetName="Subtitle" Property="Visibility" Value="Collapsed" />
+                            <Setter TargetName="Text" Property="Margin" Value="{StaticResource SearchResult.TextMarginSingle}" />
+                            <Setter TargetName="Title" Property="FontSize" Value="{StaticResource FontSize.ResultTitle}" />
+                            <Setter TargetName="Title" Property="FontWeight" Value="SemiBold" />
+                        </Trigger>
+                        <Trigger Property="Detail" Value="">
+                            <Setter TargetName="Detail" Property="Visibility" Value="Collapsed" />
+                        </Trigger>
+                        <Trigger Property="ActionText" Value="">
+                            <Setter TargetName="ActionText" Property="Visibility" Value="Collapsed" />
+                        </Trigger>
+                        <Trigger Property="ActionKey" Value="">
+                            <Setter TargetName="ActionCap" Property="Visibility" Value="Collapsed" />
+                        </Trigger>
+                        <Trigger Property="SecondaryActionKey" Value="">
+                            <Setter TargetName="SecondaryAction" Property="Visibility" Value="Collapsed" />
+                        </Trigger>
+
+                        <!-- A larger icon takes more room, and its words are smaller and white. -->
+                        <Trigger Property="Size" Value="Large">
+                            <Setter TargetName="IconHost" Property="Width" Value="{StaticResource SearchResult.IconSizeLarge}" />
+                            <Setter TargetName="IconHost" Property="Height" Value="{StaticResource SearchResult.IconSizeLarge}" />
+                            <Setter TargetName="IconHost" Property="Margin" Value="{StaticResource SearchResult.IconMarginLarge}" />
+                            <Setter TargetName="Text" Property="Margin" Value="{StaticResource SearchResult.TextMarginLarge}" />
+                            <Setter TargetName="Title" Property="FontSize" Value="{StaticResource FontSize.ResultKnowledgeTitle}" />
+                            <Setter TargetName="Title" Property="FontWeight" Value="Bold" />
+                            <Setter TargetName="Subtitle" Property="FontSize" Value="{StaticResource FontSize.ResultKnowledgeSubtitle}" />
+                            <Setter TargetName="Subtitle" Property="FontWeight" Value="SemiBold" />
+                            <Setter TargetName="Subtitle" Property="Foreground" Value="{StaticResource Brush.Text.ResultPrimary}" />
+                        </Trigger>
+
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Highlight" Property="Fill" Value="{StaticResource Brush.Surface.CommandItemHover}" />
+                        </Trigger>
+                        <Trigger Property="IsSelected" Value="True">
+                            <Setter TargetName="Highlight" Property="Fill" Value="{StaticResource Brush.Surface.CommandItemSelected}" />
+                            <Setter TargetName="Action" Property="Visibility" Value="Visible" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+        <Style.Triggers>
+            <Trigger Property="Size" Value="Large">
+                <Setter Property="Height" Value="{StaticResource SearchResult.RowHeightLarge}" />
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+
+    <!-- What else a result can do, under the right mouse button: for a file or a folder, open the folder it is in, copy the file itself, copy its path
+         (the same things Tab lists). A menu has one owner, so each row gets its own; it opens with its glass where the pointer is. -->
+    <ContextMenu x:Key="SearchResult.Menu" x:Shared="False" Style="{StaticResource GlassMenu}" Placement="MousePoint"
+                 HorizontalOffset="-28" VerticalOffset="-26"
+                 DataContext="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource Self}}"
+                 ItemsSource="{Binding Alternates}" AutomationProperties.Name="What this result can do">
+        <ContextMenu.ItemContainerStyle>
+            <Style TargetType="MenuItem" BasedOn="{StaticResource GlassMenuItemPlain}">
+                <Setter Property="Header" Value="{Binding Title}" />
+                <Setter Property="Command" Value="{Binding Command}" />
+                <Setter Property="AutomationProperties.Name" Value="{Binding Title}" />
+            </Style>
+        </ContextMenu.ItemContainerStyle>
+    </ContextMenu>
+
+    <!-- A result of the view model, drawn as a row. -->
+    <DataTemplate DataType="{x:Type vm:SearchResultViewModel}">
+        <controls:SearchResultRow x:Name="Row" Kind="{Binding Kind}" Icon="{Binding Icon}" Title="{Binding Title}"
+                                  Subtitle="{Binding Subtitle}" Detail="{Binding Detail}"
+                                  ActionText="{Binding ActionHint.Text}" ActionKey="{Binding ActionHint.Key}"
+                                  SecondaryActionText="{Binding SecondaryHint.Text}" SecondaryActionKey="{Binding SecondaryHint.Key}"
+                                  Badges="{Binding Badges}" Size="{Binding Size}"
+                                  IsSelected="{Binding IsSelected}" Command="{Binding Command}"
+                                  ContextMenu="{StaticResource SearchResult.Menu}"
+                                  AutomationProperties.Name="{Binding AutomationName}" />
+        <DataTemplate.Triggers>
+            <DataTrigger Binding="{Binding Alternates.Count}" Value="0">
+                <Setter TargetName="Row" Property="ContextMenuService.IsEnabled" Value="False" />
+            </DataTrigger>
+        </DataTemplate.Triggers>
+    </DataTemplate>
+
+    <!-- A section of results: its header, when it has a title, over its rows. Sections lie one under another, 2 apart. -->
+    <DataTemplate DataType="{x:Type vm:SearchResultSectionViewModel}">
+        <StackPanel Margin="{StaticResource SearchResult.SectionMargin}">
+            <TextBlock x:Name="Header" Text="{Binding Title}" Margin="{StaticResource SearchResult.SectionHeaderMargin}"
+                       TextTrimming="CharacterEllipsis"
+                       FontFamily="{StaticResource Font.Text}" FontWeight="SemiBold"
+                       FontSize="{StaticResource FontSize.HistorySection}"
+                       Foreground="{StaticResource Brush.Text.ResultSecondary}" />
+            <ItemsControl ItemsSource="{Binding Items}" Focusable="False" IsTabStop="False" />
+        </StackPanel>
+        <DataTemplate.Triggers>
+            <DataTrigger Binding="{Binding Title}" Value="">
+                <Setter TargetName="Header" Property="Visibility" Value="Collapsed" />
+            </DataTrigger>
+        </DataTemplate.Triggers>
+    </DataTemplate>
+
+    <!-- The chips over the results that narrow them to one kind: measured from the Search reference, 24 tall with rounded corners,
+         the panel's glass 10 % lighter, their words white and medium, 9 apart, the first 20 in from the panel's edge and 19.5 under
+         its top. The chosen one is lighter. They are never focused (the editor keeps the keyboard): a click or Ctrl+1 to Ctrl+4 chooses. -->
+    <sys:Double x:Key="SearchScopeChip.Height">24</sys:Double>
+    <Thickness x:Key="SearchScopeChip.Padding">11.5,0,11.5,1</Thickness>
+    <Thickness x:Key="SearchScopeChip.Margin">0,0,9,0</Thickness>
+    <Thickness x:Key="SearchScopeChips.Margin">20,19.5,20,0</Thickness>
+
+    <Style x:Key="SearchScopeChipButton" TargetType="Button">
+        <Setter Property="Focusable" Value="False" />
+        <Setter Property="IsTabStop" Value="False" />
+        <Setter Property="Height" Value="{StaticResource SearchScopeChip.Height}" />
+        <Setter Property="Margin" Value="{StaticResource SearchScopeChip.Margin}" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="Plate" CornerRadius="12" Background="{StaticResource Brush.Surface.ScopeChip}"
+                            Padding="{StaticResource SearchScopeChip.Padding}">
+                        <TextBlock x:Name="Label" Text="{Binding Title}" VerticalAlignment="Center"
+                                   FontFamily="{StaticResource Font.Text}" FontWeight="SemiBold"
+                                   FontSize="{StaticResource FontSize.ScopeChip}"
+                                   Foreground="{StaticResource Brush.Text.ResultPrimary}" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Plate" Property="Background" Value="{StaticResource Brush.Surface.ScopeChipHover}" />
+                        </Trigger>
+                        <DataTrigger Binding="{Binding IsActive}" Value="True">
+                            <Setter TargetName="Plate" Property="Background" Value="{StaticResource Brush.Surface.ScopeChipActive}" />
+                        </DataTrigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <DataTemplate DataType="{x:Type vm:SearchScopeChipViewModel}">
+        <Button Style="{StaticResource SearchScopeChipButton}" Command="{Binding Command}"
+                AutomationProperties.Name="{Binding AutomationName}" />
+    </DataTemplate>
+
+    <!-- A line of words in the panel: what a narrowed list says when it is empty, or why something could not be done. -->
+    <Style x:Key="SearchResultsMessage" TargetType="TextBlock">
+        <Setter Property="Margin" Value="26,2,26,8" />
+        <Setter Property="TextWrapping" Value="Wrap" />
+        <Setter Property="FontFamily" Value="{StaticResource Font.Text}" />
+        <Setter Property="FontSize" Value="{StaticResource FontSize.ResultDetail}" />
+        <Setter Property="Foreground" Value="{StaticResource Brush.Text.ResultSecondary}" />
+    </Style>
+
+    <Style x:Key="SearchScopeChips" TargetType="ItemsControl">
+        <Setter Property="Focusable" Value="False" />
+        <Setter Property="IsTabStop" Value="False" />
+        <Setter Property="ItemsPanel">
+            <Setter.Value>
+                <ItemsPanelTemplate>
+                    <StackPanel Orientation="Horizontal" />
+                </ItemsPanelTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Any number of sections of results, one under another, with no chrome of their own: bind ItemsSource to a list of
+         sections, and each is drawn with its rows. The bar's editor keeps the keyboard. -->
+    <Style x:Key="SearchResultSections" TargetType="ItemsControl">
+        <Setter Property="Focusable" Value="False" />
+        <Setter Property="IsTabStop" Value="False" />
+    </Style>
+
+</ResourceDictionary>

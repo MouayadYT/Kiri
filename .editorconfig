@@ -1,0 +1,6 @@
+root = true
+
+[*.cs]
+# Log message templates must be constant, so private values can reach a log only as parameters, which the
+# privacy filter redacts (PROJECT_SPEC §3.3).
+dotnet_diagnostic.CA2254.severity = error

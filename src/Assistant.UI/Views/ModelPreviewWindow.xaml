@@ -1,0 +1,87 @@
+<Window x:Class="Assistant.UI.Views.ModelPreviewWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Local model"
+        Width="560" SizeToContent="Height" ResizeMode="CanMinimize" ShowInTaskbar="True" Topmost="True"
+        Background="White" WindowStartupLocation="CenterScreen"
+        FontFamily="Segoe UI Variable Text, Segoe UI" FontSize="13" Foreground="#FF0F172A">
+
+    <!-- Where a model file is loaded and unloaded by hand (the settings window shows the profiles): the model's status in words, a
+         bar while it loads or unloads, the model file, its optional multimodal projector and chat template, and the two
+         commands. The status follows the model host's own reports. Opened by asking "demo model". Paths stay on this
+         PC: they go to the model host and to the settings, never to a log. -->
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="ShowWhenTrue" />
+        <Style x:Key="PathBox" TargetType="TextBox">
+            <Setter Property="Padding" Value="6,5" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+            <Setter Property="Margin" Value="0,4,8,0" />
+        </Style>
+        <Style x:Key="BrowseButton" TargetType="Button">
+            <Setter Property="Padding" Value="12,4" />
+            <Setter Property="Margin" Value="0,4,0,0" />
+            <Setter Property="MinWidth" Value="80" />
+        </Style>
+        <Style x:Key="StatusLine" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="15" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsFailed}" Value="True">
+                    <Setter Property="Foreground" Value="#FFB91C1C" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding IsReady}" Value="True">
+                    <Setter Property="Foreground" Value="#FF15803D" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+    </Window.Resources>
+
+    <StackPanel Margin="24,20,24,22">
+        <TextBlock x:Name="StatusText" Style="{StaticResource StatusLine}" Text="{Binding StatusText}"
+                   AutomationProperties.Name="Model status" AutomationProperties.LiveSetting="Polite" />
+        <ProgressBar x:Name="BusyBar" Height="4" Margin="0,10,0,0" IsIndeterminate="True"
+                     Visibility="{Binding IsBusy, Converter={StaticResource ShowWhenTrue}}"
+                     AutomationProperties.Name="Model is loading or unloading" />
+
+        <TextBlock Margin="0,18,0,0" Text="Model file (.gguf)" FontWeight="SemiBold" />
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <TextBox x:Name="ModelBox" Style="{StaticResource PathBox}" Text="{Binding ModelFilePath, UpdateSourceTrigger=PropertyChanged}"
+                     AutomationProperties.Name="Model file" />
+            <Button x:Name="BrowseModel" Grid.Column="1" Style="{StaticResource BrowseButton}" Content="Browse…" Click="OnBrowseModel" />
+        </Grid>
+
+        <TextBlock Margin="0,12,0,0" Text="Projector file for images (optional)" FontWeight="SemiBold" />
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <TextBox x:Name="ProjectorBox" Style="{StaticResource PathBox}" Text="{Binding ProjectorFilePath, UpdateSourceTrigger=PropertyChanged}"
+                     AutomationProperties.Name="Projector file" />
+            <Button x:Name="BrowseProjector" Grid.Column="1" Style="{StaticResource BrowseButton}" Content="Browse…" Click="OnBrowseProjector" />
+        </Grid>
+
+        <TextBlock Margin="0,12,0,0" Text="Chat template file (optional)" FontWeight="SemiBold" />
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <TextBox x:Name="TemplateBox" Style="{StaticResource PathBox}" Text="{Binding ChatTemplateFilePath, UpdateSourceTrigger=PropertyChanged}"
+                     AutomationProperties.Name="Chat template file" />
+            <Button x:Name="BrowseTemplate" Grid.Column="1" Style="{StaticResource BrowseButton}" Content="Browse…" Click="OnBrowseTemplate" />
+        </Grid>
+
+        <TextBlock x:Name="NoticeText" Margin="0,12,0,0" Foreground="#FFB91C1C" TextWrapping="Wrap" Text="{Binding Notice}" />
+
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
+            <Button x:Name="UnloadButton" Content="Unload" Padding="18,6" Margin="0,0,8,0" Command="{Binding UnloadCommand}" />
+            <Button x:Name="LoadButton" Content="Load" Padding="18,6" IsDefault="True" Command="{Binding LoadCommand}" />
+        </StackPanel>
+    </StackPanel>
+</Window>

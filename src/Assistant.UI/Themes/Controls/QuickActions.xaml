@@ -1,0 +1,135 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sys="clr-namespace:System;assembly=System.Runtime"
+                    xmlns:controls="clr-namespace:Assistant.UI.Controls"
+                    xmlns:viewModels="clr-namespace:Assistant.UI.ViewModels"
+                    xmlns:po="http://schemas.microsoft.com/winfx/2006/xaml/presentation/options"
+                    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+                    mc:Ignorable="po">
+
+    <!-- The tokens, glyph style and glass these styles use. StaticResource cannot see sibling dictionaries in Theme.xaml,
+         so each control dictionary merges the dictionaries it needs. -->
+    <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="../Tokens/Typography.xaml" />
+        <ResourceDictionary Source="../Tokens/Surfaces.xaml" />
+        <ResourceDictionary Source="../Tokens/Strokes.xaml" />
+        <ResourceDictionary Source="IconButton.xaml" />
+    </ResourceDictionary.MergedDictionaries>
+
+    <!-- The quick actions the Ask panel lists above the composer while selected text waits to be asked about, from the look
+         of a menu in the Ask Selection reference: white words and outline glyphs on the glass, a lighter rounded plate under
+         the row that is pointed at or focused, and a thin line before the free question. Rows are 40 tall, the glyph in a
+         column 24 wide, 12 in from the row's start. Provisional until a reference shows the panel itself. -->
+    <sys:Double x:Key="QuickAction.Height">40</sys:Double>
+    <CornerRadius x:Key="QuickAction.Corner">12</CornerRadius>
+    <Thickness x:Key="QuickAction.ContentMargin">12,0,12,0</Thickness>
+    <GridLength x:Key="QuickAction.GlyphWidth">24</GridLength>
+    <Thickness x:Key="QuickAction.TitleMargin">12,0,0,1</Thickness>
+    <sys:Double x:Key="QuickAction.FontSize">15</sys:Double>
+    <SolidColorBrush x:Key="Brush.Surface.QuickActionPressed" Color="#2EFFFFFF" po:Freeze="True" />
+
+    <!-- 20 x 19: Summarize. Three lines, the last one cut short. -->
+    <DataTemplate x:Key="Glyph.Quick.Summarize">
+        <Path Style="{StaticResource IconGlyph}" StrokeThickness="1.45" Width="20" Height="19"
+              Data="M 1.7,3 H 18.3 M 1.7,9.5 H 18.3 M 1.7,16 H 10.8" />
+    </DataTemplate>
+
+    <!-- 18 x 22: Explain. A light bulb: its glass and its base. -->
+    <DataTemplate x:Key="Glyph.Quick.Explain">
+        <Path Style="{StaticResource IconGlyph}" StrokeThickness="1.45" Width="18" Height="22"
+              Data="M 9,1.2 A 6.6,6.6 0 0 0 5.2,13.2 C 4.7,13.8 4.5,14.4 4.5,15.4 H 13.5 C 13.5,14.4 13.3,13.8 12.8,13.2
+                    A 6.6,6.6 0 0 0 9,1.2 Z M 6.2,18.2 H 11.8 M 7.3,20.8 H 10.7" />
+    </DataTemplate>
+
+    <!-- 20 x 20: Rewrite. A pencil with its tip at the lower left, and the line it writes. -->
+    <DataTemplate x:Key="Glyph.Quick.Rewrite">
+        <Path Style="{StaticResource IconGlyph}" StrokeThickness="1.45" Width="20" Height="20"
+              Data="M 13.2,2.6 L 17.4,6.8 L 6.8,17.4 L 1.8,18.2 L 2.6,13.2 Z M 11.2,4.6 L 15.4,8.8 M 10.6,18.2 H 18.2" />
+    </DataTemplate>
+
+    <!-- 20 x 20: Solve. The four signs of arithmetic, in a square: plus, minus, equals and times. -->
+    <DataTemplate x:Key="Glyph.Quick.Solve">
+        <Path Style="{StaticResource IconGlyph}" StrokeThickness="1.45" Width="20" Height="20"
+              Data="M 1.8,5.2 H 8 M 4.9,2.1 V 8.3 M 12,5.2 H 18.2 M 1.8,14.6 H 8 M 1.8,17.8 H 8
+                    M 12.2,13 L 18,18.8 M 18,13 L 12.2,18.8" />
+    </DataTemplate>
+
+    <!-- 18 x 20: Define. A book: its cover with the spine at the left, and the pages' edge below. -->
+    <DataTemplate x:Key="Glyph.Quick.Define">
+        <Path Style="{StaticResource IconGlyph}" StrokeThickness="1.45" Width="18" Height="20"
+              Data="M 2.2,3.4 A 2,2 0 0 1 4.2,1.4 H 16.2 V 14.6 H 4.2 A 2,2 0 0 0 2.2,16.6 Z
+                    M 2.2,16.6 A 2,2 0 0 0 4.2,18.6 H 16.2 V 14.6 M 6.4,5.6 H 12.2" />
+    </DataTemplate>
+
+    <!-- 20 x 20: Ask Anything. The Assistant's own mark, a circle with the orb's smiling boundary across its middle. -->
+    <DataTemplate x:Key="Glyph.Quick.AskAnything">
+        <Path Style="{StaticResource IconGlyph}" StrokeThickness="1.45" Width="20" Height="20"
+              Data="M 1.2,10 A 8.8,8.8 0 1 1 18.8,10 A 8.8,8.8 0 1 1 1.2,10 Z
+                    M 1.6,9.3 C 5.6,12.6 14.4,12.6 18.4,9.3" />
+    </DataTemplate>
+
+    <!-- One row of the list: its glyph and its title on a rounded plate that lights while the pointer is on the row or the
+         keyboard is. It is a button, so Tab reaches it and Enter or Space runs it. The free question, last, has a thin line
+         above it. -->
+    <DataTemplate x:Key="QuickAction.Row" DataType="{x:Type viewModels:CommandItemViewModel}">
+        <StackPanel>
+            <Rectangle x:Name="Separator" Height="1" Margin="12,5,12,5" Fill="{StaticResource Brush.Stroke.Separator}"
+                       Visibility="Collapsed" />
+            <Button x:Name="Row" Command="{Binding Command}" Height="{StaticResource QuickAction.Height}"
+                    HorizontalContentAlignment="Stretch" AutomationProperties.Name="{Binding Title}">
+                <Button.Template>
+                    <ControlTemplate TargetType="Button">
+                        <Grid Background="Transparent">
+                            <Border x:Name="Highlight" CornerRadius="{StaticResource QuickAction.Corner}" Background="Transparent" />
+                            <Grid Margin="{StaticResource QuickAction.ContentMargin}">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="{StaticResource QuickAction.GlyphWidth}" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                  TextElement.Foreground="{StaticResource Brush.Text.CommandItem}"
+                                                  Content="{Binding}"
+                                                  ContentTemplate="{Binding IconKey, Converter={x:Static controls:GlyphTemplateConverter.Instance}}" />
+                                <TextBlock Grid.Column="1" Margin="{StaticResource QuickAction.TitleMargin}" VerticalAlignment="Center"
+                                           Text="{Binding Title}" TextTrimming="CharacterEllipsis"
+                                           FontFamily="{StaticResource Font.Text}" FontSize="{StaticResource QuickAction.FontSize}"
+                                           FontWeight="SemiBold" Foreground="{StaticResource Brush.Text.CommandItem}" />
+                            </Grid>
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Highlight" Property="Background" Value="{StaticResource Brush.Surface.CommandItemSelected}" />
+                            </Trigger>
+                            <Trigger Property="IsKeyboardFocused" Value="True">
+                                <Setter TargetName="Highlight" Property="Background" Value="{StaticResource Brush.Surface.CommandItemSelected}" />
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Highlight" Property="Background" Value="{StaticResource Brush.Surface.QuickActionPressed}" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Button.Template>
+            </Button>
+        </StackPanel>
+        <DataTemplate.Triggers>
+            <DataTrigger Binding="{Binding IconKey}" Value="Glyph.Quick.AskAnything">
+                <Setter TargetName="Separator" Property="Visibility" Value="Visible" />
+            </DataTrigger>
+        </DataTemplate.Triggers>
+    </DataTemplate>
+
+    <!-- The list: the rows one under another, with no chrome of its own. -->
+    <Style x:Key="QuickActionList" TargetType="ItemsControl">
+        <Setter Property="Focusable" Value="False" />
+        <Setter Property="IsTabStop" Value="False" />
+        <Setter Property="ItemTemplate" Value="{StaticResource QuickAction.Row}" />
+        <Setter Property="ItemsPanel">
+            <Setter.Value>
+                <ItemsPanelTemplate>
+                    <StackPanel />
+                </ItemsPanelTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+</ResourceDictionary>

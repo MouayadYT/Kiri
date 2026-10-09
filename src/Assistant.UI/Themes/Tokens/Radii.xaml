@@ -1,0 +1,40 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sys="clr-namespace:System;assembly=System.Runtime">
+
+    <!-- Corner radii for rectangular surfaces. Pills are not listed: PillShape derives their continuous-curvature
+         ends from their height. Circular controls are ellipses. Small, Medium and Large are provisional until a
+         reference with chips is supplied. -->
+    <CornerRadius x:Key="Radius.Small">8</CornerRadius>
+    <CornerRadius x:Key="Radius.Medium">14</CornerRadius>
+    <CornerRadius x:Key="Radius.Large">22</CornerRadius>
+
+    <!-- Measured from the floating conversation reference: how far the continuous-curvature corners of a panel and of
+         a rich card reach along their edges (PanelShape.CornerSize), and the radius of a message bubble's round
+         ends. -->
+    <sys:Double x:Key="Radius.Panel">42.75</sys:Double>
+    <sys:Double x:Key="Radius.Card">40.5</sys:Double>
+    <sys:Double x:Key="Radius.Bubble">15.75</sys:Double>
+
+    <!-- A gallery's corners match a card's in the photo reference (Radius.Card). Code blocks and lists of files are
+         smaller surfaces with smaller corners, provisional until a reference shows them. -->
+    <sys:Double x:Key="Radius.ContentBlock">22</sys:Double>
+
+    <!-- The launcher's category panel under the Search or Ask bar, measured from its reference: how far its
+         continuous-curvature corners reach along its edges (PanelShape.CornerSize). -->
+    <sys:Double x:Key="Radius.Launcher">49</sys:Double>
+
+    <!-- A conversation's card in the History window's sidebar, and the top corners of the image set into it, measured
+         from their references. -->
+    <sys:Double x:Key="Radius.HistoryCard">46.5</sys:Double>
+    <sys:Double x:Key="Radius.HistoryThumbnail">32</sys:Double>
+
+    <!-- The smooth corners of a row of the History window's list and of its thumbnail, measured from the list
+         reference, and of a menu and its highlighted item, measured from the view menu reference; the item's corners
+         follow the menu's, inset with it. -->
+    <sys:Double x:Key="Radius.HistoryRow">9</sys:Double>
+    <sys:Double x:Key="Radius.HistoryRowThumbnail">11.25</sys:Double>
+    <sys:Double x:Key="Radius.Menu">15.8</sys:Double>
+    <sys:Double x:Key="Radius.MenuItem">10.8</sys:Double>
+
+</ResourceDictionary>

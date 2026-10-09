@@ -1,0 +1,75 @@
+<UserControl x:Class="Assistant.UI.Onboarding.VoiceControlSetupControl" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <UserControl.Resources><ResourceDictionary><ResourceDictionary.MergedDictionaries><ResourceDictionary Source="SetupStyles.xaml"/></ResourceDictionary.MergedDictionaries></ResourceDictionary></UserControl.Resources>
+    <StackPanel>
+        <CheckBox Content="Allow voice mode" IsChecked="{Binding EnableVoiceControl}" Style="{StaticResource SetupCheck}" FontSize="15" Margin="0,0,0,20" IsEnabled="{Binding IsIdle}"/>
+        <StackPanel Visibility="{Binding EnableVoiceControl, Converter={StaticResource Show}}" IsEnabled="{Binding IsIdle}">
+            <TextBlock Text="Speech recognition" Style="{StaticResource SetupText}" FontWeight="SemiBold" Margin="0,0,0,14"/>
+            <ComboBox ItemsSource="{Binding AsrModels}" SelectedItem="{Binding SelectedAsr}" Style="{StaticResource SettingsComboBox}" MaxDropDownHeight="440" HorizontalContentAlignment="Stretch" AutomationProperties.Name="Speech recognition provider and model">
+                <ComboBox.ItemTemplate><DataTemplate><StackPanel Margin="0,4">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="{Binding Name}" Style="{StaticResource SetupText}" FontSize="16" FontWeight="SemiBold"/>
+                        <TextBlock Text="{Binding FileSize}" Style="{StaticResource SetupMuted}" FontSize="13" Margin="10,0,0,1" VerticalAlignment="Bottom" Visibility="{Binding HasDownload, Converter={StaticResource Show}}"/>
+                    </StackPanel>
+                    <TextBlock Text="{Binding Ram}" Style="{StaticResource SetupMuted}" Margin="0,6,0,0" Visibility="{Binding HasDownload, Converter={StaticResource Show}}"/>
+                </StackPanel></DataTemplate></ComboBox.ItemTemplate>
+            </ComboBox>
+            <Border Style="{StaticResource SetupCard}" Margin="0,14,0,0" Visibility="{Binding UsesHandy, Converter={StaticResource Show}}"><StackPanel>
+                <TextBlock Text="{Binding HandyStatus}" Style="{StaticResource SetupText}"/>
+                <StackPanel Orientation="Horizontal" Margin="0,14,0,0">
+                    <Button Content="{Binding HandyButtonLabel}" Command="{Binding OpenHandyCommand}" Style="{StaticResource SetupButton}"/>
+                    <Button Content="Refresh" Command="{Binding RefreshHandyCommand}" Style="{StaticResource SetupButton}" Margin="8,0,0,0"/>
+                    <Button Content="Test speed" Command="{Binding TestRecognizerCommand}" Style="{StaticResource SetupButton}" Margin="8,0,0,0"/>
+                </StackPanel>
+            </StackPanel></Border>
+            <Border Style="{StaticResource SetupCard}" Margin="0,14,0,0" Visibility="{Binding UsesLocalAsr, Converter={StaticResource Show}}"><StackPanel>
+                <TextBlock Text="{Binding AsrInstallState}" Style="{StaticResource SetupText}"/>
+                <StackPanel Orientation="Horizontal" Margin="0,14,0,0">
+                    <Button Content="Download recognizer" Command="{Binding DownloadRecognizerCommand}" Style="{StaticResource SetupButton}"/>
+                    <Button Content="Delete" Command="{Binding DeleteCommand}" CommandParameter="{Binding SelectedAsr.Model}" Visibility="{Binding SelectedAsr.Model.CanDelete, Converter={StaticResource Show}}" Style="{StaticResource SetupButton}" Margin="8,0,0,0"/>
+                    <Button Content="Test speed" Command="{Binding TestRecognizerCommand}" Style="{StaticResource SetupButton}" Margin="8,0,0,0"/>
+                </StackPanel>
+                <TextBlock Text="Run speech recognition on" Style="{StaticResource SetupText}" Margin="0,16,0,8"/>
+                <ComboBox ItemsSource="{Binding AsrDevices}" SelectedItem="{Binding AsrDevice}" DisplayMemberPath="Name" Style="{StaticResource SettingsComboBox}" MinHeight="36"/>
+            </StackPanel></Border>
+            <Border Style="{StaticResource SetupCard}" Margin="0,14,0,0" Visibility="{Binding UsesWindowsAsr, Converter={StaticResource Show}}"><StackPanel>
+                <TextBlock Text="{Binding AsrInstallState}" Style="{StaticResource SetupText}"/>
+                <StackPanel Orientation="Horizontal" Margin="0,14,0,0">
+                    <Button Content="Refresh" Command="{Binding RefreshHandyCommand}" Style="{StaticResource SetupButton}"/>
+                    <Button Content="Test speed" Command="{Binding TestRecognizerCommand}" Style="{StaticResource SetupButton}" Margin="8,0,0,0"/>
+                </StackPanel>
+            </StackPanel></Border>
+            <TextBlock Text="{Binding AsrBenchmark}" Style="{StaticResource SetupMuted}" Margin="0,14,0,0" TextWrapping="Wrap"/>
+            <CheckBox Content="Wake Kiri by saying “Kiri” or “Hey Kiri”" IsChecked="{Binding EnableWakeWord}" Style="{StaticResource SetupCheck}" Margin="0,22,0,0"/>
+            <Border Style="{StaticResource SetupCard}" Margin="0,14,0,0" Visibility="{Binding EnableWakeWord, Converter={StaticResource Show}}"><StackPanel>
+                <TextBlock Text="Kiri wake-word listener" Style="{StaticResource SetupText}" FontWeight="SemiBold"/>
+                <TextBlock Text="{Binding WakeWord.Size}" Style="{StaticResource SetupMuted}" Margin="0,6,0,0"/>
+                <StackPanel Orientation="Horizontal" Margin="0,14,0,0">
+                    <Button Content="Download wake-word model" Command="{Binding DownloadWakeWordCommand}" Style="{StaticResource SetupButton}"/>
+                    <Button Content="Delete" Command="{Binding DeleteCommand}" CommandParameter="{Binding WakeWord}" Visibility="{Binding WakeWord.CanDelete, Converter={StaticResource Show}}" Style="{StaticResource SetupButton}" Margin="8,0,0,0"/>
+                </StackPanel>
+                <TextBlock Text="Installed" Visibility="{Binding IsWakeWordInstalled, Converter={StaticResource Show}}" Style="{StaticResource SetupMuted}" Margin="0,10,0,0"/>
+            </StackPanel></Border>
+            <StackPanel x:Name="MicrophonePart" Margin="0,22,0,0" Visibility="{Binding HasMicrophones, Converter={StaticResource Show}}">
+                <TextBlock Text="Microphone" Style="{StaticResource SetupText}" FontWeight="SemiBold" Margin="0,0,0,10"/>
+                <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                    <ComboBox x:Name="MicrophoneList" ItemsSource="{Binding Microphones}" SelectedItem="{Binding SelectedMicrophone}" DisplayMemberPath="Name" Style="{StaticResource SettingsComboBox}" Height="38" DropDownOpened="OnMicrophonesOpened" AutomationProperties.Name="Microphone"/>
+                    <Button x:Name="TestMicrophone" Grid.Column="1" Content="Test" Command="{Binding TestMicrophoneCommand}" Style="{StaticResource SetupButton}" Margin="12,0,0,0" Visibility="{Binding CanTestMicrophone, Converter={StaticResource Show}}" AutomationProperties.Name="Test the microphone"/>
+                </Grid>
+                <ProgressBar x:Name="MicrophoneLevel" Height="4" Margin="0,10,0,0" Minimum="0" Maximum="1" Value="{Binding MicrophoneLevel, Mode=OneWay}" Foreground="#2F6BD5" Background="#20FFFFFF" BorderThickness="0" Visibility="{Binding IsTestingMicrophone, Converter={StaticResource Show}}" AutomationProperties.Name="Microphone level"/>
+                <TextBlock x:Name="MicrophoneStatus" Text="{Binding MicrophoneStatus}" Margin="0,8,0,0" AutomationProperties.LiveSetting="Polite">
+                    <TextBlock.Style><Style TargetType="TextBlock" BasedOn="{StaticResource SetupMuted}"><Style.Triggers><Trigger Property="Text" Value=""><Setter Property="Visibility" Value="Collapsed"/></Trigger></Style.Triggers></Style></TextBlock.Style>
+                </TextBlock>
+            </StackPanel>
+        </StackPanel>
+        <Button Content="Apply voice control" Command="{Binding SaveVoiceControlCommand}" Style="{StaticResource SetupButton}" HorizontalAlignment="Left" Margin="0,22,0,0" Visibility="{Binding ShowApplyButton, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource Show}}"/>
+        <StackPanel x:Name="StatusPart" Margin="0,16,0,0" Visibility="{Binding ShowStatus, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource Show}}">
+            <StackPanel Visibility="{Binding IsModelBusy, Converter={StaticResource Show}}">
+                <ProgressBar Height="4" Maximum="100" Value="{Binding Progress, Mode=OneWay}"/>
+                <Button Content="Cancel" Command="{Binding CancelCommand}" Style="{StaticResource SetupButton}" HorizontalAlignment="Left" Margin="0,8,0,0"/>
+            </StackPanel>
+            <TextBlock Text="{Binding Status}" Margin="0,8,0,0" AutomationProperties.LiveSetting="Polite">
+                <TextBlock.Style><Style TargetType="TextBlock" BasedOn="{StaticResource SetupMuted}"><Style.Triggers><Trigger Property="Text" Value=""><Setter Property="Visibility" Value="Collapsed"/></Trigger></Style.Triggers></Style></TextBlock.Style>
+            </TextBlock>
+        </StackPanel>
+    </StackPanel>
+</UserControl>

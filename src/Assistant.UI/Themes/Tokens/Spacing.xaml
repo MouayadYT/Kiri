@@ -1,0 +1,25 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sys="clr-namespace:System;assembly=System.Runtime">
+
+    <!-- Spacing scale on a 4-DIP grid, for gaps and padding between elements. -->
+    <sys:Double x:Key="Spacing.XS">4</sys:Double>
+    <sys:Double x:Key="Spacing.S">8</sys:Double>
+    <sys:Double x:Key="Spacing.M">12</sys:Double>
+    <sys:Double x:Key="Spacing.L">16</sys:Double>
+    <sys:Double x:Key="Spacing.XL">24</sys:Double>
+    <sys:Double x:Key="Spacing.XXL">36</sys:Double>
+
+    <!-- How far a card, and any other part of a message as wide as one, reaches past the text column on each side,
+         measured from the floating conversation reference (Controls/Messages.xaml). A conversation view may set its own:
+         the History window's workspace does (Controls/History.xaml). -->
+    <Thickness x:Key="Message.CardBleed">-14,0,-14,0</Thickness>
+
+    <!-- Control sizes. GlassButton is measured from the floating conversation reference. -->
+    <sys:Double x:Key="Size.IconButton">32</sys:Double>
+    <sys:Double x:Key="Size.GlassButton">36</sys:Double>
+
+    <!-- The Searching chip's height, measured from its reference. -->
+    <sys:Double x:Key="Size.ActivityChip">41</sys:Double>
+
+</ResourceDictionary>

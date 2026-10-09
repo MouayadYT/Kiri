@@ -1,0 +1,26 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+                    xmlns:po="http://schemas.microsoft.com/winfx/2006/xaml/presentation/options"
+                    mc:Ignorable="po">
+
+    <!-- Shadows are cast by an opaque copy of a surface, inset by CasterInset so that its edge stays under the
+         surface. Views clip the surface's area out of the caster, so a shadow never shows through translucent
+         glass. -->
+    <SolidColorBrush x:Key="Brush.Shadow.Caster" Color="Black" po:Freeze="True" />
+    <Thickness x:Key="Shadow.CasterInset">1</Thickness>
+
+    <!-- A soft shadow that falls mostly below a floating surface, measured from the Search or Ask reference. -->
+    <DropShadowEffect x:Key="Shadow.Floating" Color="Black" Direction="270" ShadowDepth="19" BlurRadius="64"
+                      Opacity="0.74" RenderingBias="Quality" po:Freeze="True" />
+
+    <!-- The Searching chip's shadow, measured from its reference over white: it falls mostly below the chip, about half as
+         dark as black right under its edge, and a faint fifth to its sides. -->
+    <DropShadowEffect x:Key="Shadow.Chip" Color="Black" Direction="270" ShadowDepth="14" BlurRadius="56"
+                      Opacity="0.85" RenderingBias="Quality" po:Freeze="True" />
+
+    <!-- A menu's shadow: close and soft, falling a little below it, measured from the view menu reference. -->
+    <DropShadowEffect x:Key="Shadow.Menu" Color="Black" Direction="270" ShadowDepth="2" BlurRadius="24"
+                      Opacity="0.3" RenderingBias="Quality" po:Freeze="True" />
+
+</ResourceDictionary>

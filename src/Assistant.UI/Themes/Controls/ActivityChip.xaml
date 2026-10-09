@@ -1,0 +1,59 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:controls="clr-namespace:Assistant.UI.Controls">
+
+    <!-- The tokens this style uses. StaticResource cannot see sibling dictionaries in Theme.xaml, so each control
+         dictionary merges the token dictionaries it needs. -->
+    <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="../Tokens/Spacing.xaml" />
+        <ResourceDictionary Source="../Tokens/Typography.xaml" />
+        <ResourceDictionary Source="../Tokens/Surfaces.xaml" />
+        <ResourceDictionary Source="../Tokens/Strokes.xaml" />
+        <ResourceDictionary Source="../Tokens/Shadows.xaml" />
+        <ResourceDictionary Source="../Tokens/Motion.xaml" />
+    </ResourceDictionary.MergedDictionaries>
+
+    <!-- The Searching chip, measured from its reference (2x image, in DIPs): a pill 41 tall and about 124 wide, of the
+         same dark glass as the Search or Ask pill, made opaque so that it looks the same over anything (it is a small
+         piece of glass with nothing of its own to blur). The indicator's ring is centered 19.4 from its left, and the
+         word starts 43.3 from it, with 16 after the word. The chip lies in its own place: it draws its shadow itself,
+         which falls beyond its bounds. -->
+    <Style TargetType="controls:ActivityChip">
+        <Setter Property="Height" Value="{StaticResource Size.ActivityChip}" />
+        <Setter Property="Focusable" Value="False" />
+        <Setter Property="IsTabStop" Value="False" />
+        <Setter Property="Foreground" Value="{StaticResource Brush.Text.Activity}" />
+        <Setter Property="FontFamily" Value="{StaticResource Font.Text}" />
+        <Setter Property="FontSize" Value="{StaticResource FontSize.Activity}" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Motion" Value="{StaticResource Motion.SearchingRing}" />
+        <Setter Property="AutomationProperties.LiveSetting" Value="Polite" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="controls:ActivityChip">
+                    <Grid>
+                        <controls:PillShape Fill="{StaticResource Brush.Shadow.Caster}"
+                                            Margin="{StaticResource Shadow.CasterInset}"
+                                            Effect="{StaticResource Shadow.Chip}" IsHitTestVisible="False" />
+                        <controls:ChipGlass x:Name="PART_Glass" Fill="{StaticResource Brush.Surface.GlassOpaque}"
+                                            Stroke="{StaticResource Brush.Stroke.Rim}"
+                                            StrokeThickness="{StaticResource StrokeThickness.Hairline}" />
+
+                        <!-- The indicator and the word, at the chip's left whatever its width: it widens past them. They lie
+                             on a canvas, which takes no room, so that the chip is as wide as it is drawn. -->
+                        <Canvas x:Name="PART_Clip">
+                            <StackPanel x:Name="PART_Content" Orientation="Horizontal">
+                                <controls:SearchingIndicator x:Name="PART_Indicator" Margin="6.9,0,0,0"
+                                                             VerticalAlignment="Center"
+                                                             Motion="{TemplateBinding Motion}" />
+                                <TextBlock Text="{TemplateBinding Text}" Margin="8.9,0,15.5,2"
+                                           VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Canvas>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+</ResourceDictionary>

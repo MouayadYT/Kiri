@@ -1,0 +1,31 @@
+<Window x:Class="Assistant.UI.Permissions.PermissionPromptWindow" x:ClassModifier="internal"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Allow the Assistant?"
+        Width="420" SizeToContent="Height" WindowStyle="None" ResizeMode="NoResize" ShowInTaskbar="False" Topmost="True"
+        AllowsTransparency="True" Background="Transparent" WindowStartupLocation="CenterScreen">
+
+    <!-- The question the Assistant asks when a permission is set to ask every time (PROJECT_SPEC section 4.9, step 119): what it wants to use, what for, and two
+         buttons. Don't allow is the default, so Enter and Esc never allow; the use goes ahead only when Allow once is pressed, and that button works only after
+         the window has been in front of the user for a moment. It is the same dialog as the one that asks before a picture is searched with. -->
+    <Border Margin="14" CornerRadius="18" Background="{StaticResource Brush.Surface.SidebarOpaque}"
+            BorderBrush="{StaticResource Brush.Stroke.ControlRim}" BorderThickness="1">
+        <Border.Effect>
+            <DropShadowEffect BlurRadius="24" ShadowDepth="4" Opacity="0.45" Color="Black" />
+        </Border.Effect>
+        <StackPanel Margin="22,20,22,20">
+            <TextBlock x:Name="Heading" Style="{StaticResource Text.Heading}" FontSize="{StaticResource FontSize.Body}" TextWrapping="Wrap"
+                       AutomationProperties.HeadingLevel="Level1" />
+            <TextBlock x:Name="Detail" Margin="0,12,0,0" TextWrapping="Wrap" Style="{StaticResource Text.BodySmall}"
+                       Foreground="{StaticResource Brush.Text.Secondary}" />
+            <TextBlock x:Name="Setting" Margin="0,10,0,0" TextWrapping="Wrap" Style="{StaticResource Text.BodySmall}"
+                       Foreground="{StaticResource Brush.Text.Secondary}" />
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,18,0,0">
+                <Button x:Name="DeclineButton" Style="{StaticResource ImageSearch.DialogButton}" Content="Don't allow" IsDefault="True" IsCancel="True" MinWidth="96"
+                        Padding="14,6" AutomationProperties.Name="Don't allow, and do nothing" />
+                <Button x:Name="AllowButton" Style="{StaticResource ImageSearch.DialogPrimary}" Content="Allow once" MinWidth="96" Padding="14,6" Margin="10,0,0,0"
+                        IsEnabled="False" AutomationProperties.Name="Allow this once" />
+            </StackPanel>
+        </StackPanel>
+    </Border>
+</Window>

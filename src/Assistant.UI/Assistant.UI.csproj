@@ -1,0 +1,85 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Composition root (PROJECT_SPEC §5.2): the only project that references every module. -->
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows10.0.22621.0</TargetFramework>
+    <PlatformTarget>x64</PlatformTarget>
+    <UseWPF>true</UseWPF>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <!-- The same icon File Explorer's Ask Assistant entry shows: the exe's own icon, and the notification-area icon's file (below). -->
+    <ApplicationIcon>..\Assistant.ExplorerExtension\Assets\Assistant.ico</ApplicationIcon>
+  </PropertyGroup>
+
+  <!-- The notification-area icon loads the sizes it needs from this file beside the exe (PROJECT_SPEC §4.9); without it the system's plain
+       application icon is shown. -->
+  <ItemGroup>
+    <Content Include="..\Assistant.ExplorerExtension\Assets\Assistant.ico" Link="Assistant.ico" CopyToOutputDirectory="PreserveNewest" />
+    <!-- File Explorer's menu mark, white and black, beside Assistant.ExplorerExtension.exe (which registers whichever fits the theme). -->
+    <Content Include="..\Assistant.ExplorerExtension\Assets\AskAssistant.dark.ico" Link="AskAssistant.dark.ico" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\Assistant.ExplorerExtension\Assets\AskAssistant.light.ico" Link="AskAssistant.light.ico" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\Assistant.ExplorerExtension\Assets\PackageLogo.png" Link="PackageLogo.png" CopyToOutputDirectory="PreserveNewest" />
+    <!-- A short local speech sample for the ASR load and real-time speed test. -->
+    <Content Include="Assets\asr-speed-test.wav" Link="assets\asr-speed-test.wav" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <!-- The Assistant's mark (white), drawn on the Visual Intelligence Ask chip. -->
+  <ItemGroup>
+    <Resource Include="Assets\AskAssistantMark.png" />
+    <Resource Include="Onboarding\Icons\*.png" />
+  </ItemGroup>
+
+  <!-- App.xaml is a plain page so that Program.Main, not a generated entry point, owns startup. -->
+  <ItemGroup>
+    <ApplicationDefinition Remove="App.xaml" />
+    <Page Include="App.xaml" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.1" />
+    <PackageReference Include="System.Speech" Version="8.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Assistant.Core\Assistant.Core.csproj" />
+    <ProjectReference Include="..\Assistant.Data\Assistant.Data.csproj" />
+    <ProjectReference Include="..\Assistant.Documents\Assistant.Documents.csproj" />
+    <ProjectReference Include="..\Assistant.Search\Assistant.Search.csproj" />
+    <ProjectReference Include="..\Assistant.Tools\Assistant.Tools.csproj" />
+    <ProjectReference Include="..\Assistant.Voice\Assistant.Voice.csproj" />
+    <ProjectReference Include="..\Assistant.VoiceHost\Assistant.VoiceHost.csproj" />
+    <ProjectReference Include="..\Assistant.Windows\Assistant.Windows.csproj" />
+  </ItemGroup>
+
+  <!-- The model host is an executable, not a library: this reference only ships Assistant.ModelHost.exe beside the
+       app, which starts it as a hidden child process (PROJECT_SPEC §5.6). -->
+  <ItemGroup>
+    <ProjectReference Include="..\Assistant.ModelHost\Assistant.ModelHost.csproj" />
+  </ItemGroup>
+
+  <!-- The same for File Explorer's entry point: Assistant.ExplorerExtension.exe ships beside the app, which registers it as the
+       Ask Assistant menu entry and is started by it (PROJECT_SPEC §4.4). The app never calls its code. -->
+  <ItemGroup>
+    <ProjectReference Include="..\Assistant.ExplorerExtension\Assistant.ExplorerExtension.csproj" />
+  </ItemGroup>
+
+  <!-- And the browser's native-messaging host: Assistant.BrowserBridge.exe ships beside the app, which registers it for the browsers and
+       is started by it (PROJECT_SPEC §4.5). The app never calls its code. -->
+  <ItemGroup>
+    <ProjectReference Include="..\Assistant.BrowserBridge\Assistant.BrowserBridge.csproj" />
+  </ItemGroup>
+
+  <!-- Microsoft To Do for the Assistant: a small MCP server that ships beside the app (Assistant.MicrosoftTodo.exe) and that the Assistant starts, with the access token the user's
+       sign-in to Microsoft gave it, when a request is about Microsoft To Do (PROJECT_SPEC section 4.8). The app never calls its code. -->
+  <ItemGroup>
+    <ProjectReference Include="..\Assistant.MicrosoftTodo\Assistant.MicrosoftTodo.csproj" />
+  </ItemGroup>
+
+  <!-- The sample integrations ("Sample Notes", "Sample Calendar" and "Sample Messages": one made-up MCP server program that touches nothing, started as one of the three): it
+       ships beside the app so that `demo integration` and `demo reminder` can pack it into a bundle, serve the bundle from this PC and install it through the real approval panel
+       (PROJECT_SPEC §4.8, steps 108 and 116). The app never calls its code. -->
+  <ItemGroup>
+    <ProjectReference Include="..\..\samples\Assistant.SampleMcpServer\Assistant.SampleMcpServer.csproj" />
+  </ItemGroup>
+
+</Project>

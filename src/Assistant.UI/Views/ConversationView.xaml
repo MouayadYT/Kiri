@@ -1,0 +1,47 @@
+<UserControl x:Class="Assistant.UI.Views.ConversationView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="clr-namespace:Assistant.UI.Controls"
+             xmlns:views="clr-namespace:Assistant.UI.Views"
+             Focusable="False" IsTabStop="False">
+
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="ShowWhileWorking" />
+    </UserControl.Resources>
+
+    <!-- The one view that draws a conversation, for the floating panel and for the History window's workspace: its
+         messages (Themes/Controls/Messages.xaml) directly on whatever surface the host gives, with no surface of its own,
+         scrolling without a visible scroll bar and fading toward its top and bottom edges so they pass under the host's
+         controls. The host sets where they rest (ContentPadding), how wide the column is allowed to be and how the
+         edges fade. -->
+    <controls:FadingScrollViewer x:Name="Transcript" Background="Transparent" Focusable="True"
+                                 FocusVisualStyle="{x:Null}"
+                                 VerticalScrollBarVisibility="Hidden" HorizontalScrollBarVisibility="Disabled"
+                                 TopFade="{Binding TopFade, RelativeSource={RelativeSource AncestorType=views:ConversationView}}"
+                                 BottomFade="{Binding BottomFade, RelativeSource={RelativeSource AncestorType=views:ConversationView}}"
+                                 AutomationProperties.Name="Conversation">
+        <ItemsControl x:Name="MessageList" Focusable="False"
+                      ItemsSource="{Binding Messages, RelativeSource={RelativeSource AncestorType=views:ConversationView}}"
+                      MaxWidth="{Binding ColumnWidth, RelativeSource={RelativeSource AncestorType=views:ConversationView}}"
+                      Padding="{Binding ContentPadding, RelativeSource={RelativeSource AncestorType=views:ConversationView}}"
+                      ItemTemplateSelector="{StaticResource MessageTemplates}">
+            <!-- Under the last message, where the answer will be, the Searching indicator turns while the Assistant works on it (IsWorking): the
+                 host's composer stays where it is, and nothing is drawn over it. It takes room only while it shows. -->
+            <ItemsControl.Template>
+                <ControlTemplate TargetType="ItemsControl">
+                    <StackPanel Margin="{TemplateBinding Padding}">
+                        <ItemsPresenter />
+                        <controls:SearchingIndicator x:Name="WorkingDots" HorizontalAlignment="Left" Margin="-4,10,0,6"
+                                                     Motion="{StaticResource Motion.SearchingRing}"
+                                                     IsActive="{Binding IsWorking, RelativeSource={RelativeSource AncestorType=views:ConversationView}}"
+                                                     AutomationProperties.Name="{Binding WorkingText, RelativeSource={RelativeSource AncestorType=views:ConversationView}}"
+                                                     AutomationProperties.LiveSetting="Polite"
+                                                     Visibility="{Binding IsWorking, RelativeSource={RelativeSource AncestorType=views:ConversationView}, Converter={StaticResource ShowWhileWorking}}" />
+                        <!-- Room under the last message, only as much as it takes for an answer that is brought to the top (a message that was sent) to get there. -->
+                        <Border x:Name="TailRoom" Height="{Binding TailRoom, RelativeSource={RelativeSource AncestorType=views:ConversationView}}" IsHitTestVisible="False" />
+                    </StackPanel>
+                </ControlTemplate>
+            </ItemsControl.Template>
+        </ItemsControl>
+    </controls:FadingScrollViewer>
+</UserControl>

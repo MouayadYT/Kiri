@@ -1,0 +1,50 @@
+<UserControl x:Class="Assistant.UI.Onboarding.SearchSetupControl" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" Background="Transparent">
+    <UserControl.Resources>
+        <ResourceDictionary><ResourceDictionary.MergedDictionaries><ResourceDictionary Source="SetupStyles.xaml"/></ResourceDictionary.MergedDictionaries>
+            <Style x:Key="ProviderIcon" TargetType="Image"><Setter Property="Width" Value="38"/><Setter Property="Height" Value="38"/>
+                <Style.Triggers>
+                    <DataTrigger Binding="{Binding Icon}" Value="exa"><Setter Property="Source" Value="Icons/exa.png"/></DataTrigger>
+                    <DataTrigger Binding="{Binding Icon}" Value="tavily"><Setter Property="Source" Value="Icons/tavily.png"/></DataTrigger>
+                    <DataTrigger Binding="{Binding Icon}" Value="duckduckgo"><Setter Property="Source" Value="Icons/duckduckgo.png"/></DataTrigger>
+                </Style.Triggers>
+            </Style>
+        </ResourceDictionary>
+    </UserControl.Resources>
+    <StackPanel>
+        <Border Style="{StaticResource SetupCard}" Margin="0,0,0,16"><StackPanel>
+            <CheckBox Content="Enable web search" IsChecked="{Binding Enabled}" Style="{StaticResource SetupCheck}" IsEnabled="{Binding IsIdle}"/>
+        </StackPanel></Border>
+        <ListBox ItemsSource="{Binding Providers}" SelectedItem="{Binding SelectedProvider}" Style="{StaticResource SetupModelList}" ItemContainerStyle="{StaticResource SetupModelItem}" IsEnabled="{Binding IsIdle}" AutomationProperties.Name="Web search engine">
+            <ListBox.ItemTemplate><DataTemplate><Grid>
+                <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                <Border Width="50" Height="50" Background="#18FFFFFF" CornerRadius="12" VerticalAlignment="Top" Margin="0,0,16,0"><Image Style="{StaticResource ProviderIcon}"/></Border>
+                <StackPanel Grid.Column="1">
+                    <WrapPanel><TextBlock Text="{Binding Name}" Style="{StaticResource SetupText}" FontSize="17" FontWeight="SemiBold"/>
+                        <Border Background="#372F6BD5" CornerRadius="4" Padding="7,3" Margin="10,0,0,0" Visibility="{Binding Recommended, Converter={StaticResource Show}}"><TextBlock Text="RECOMMENDED" Foreground="#DCE8FB" FontSize="9" FontWeight="SemiBold"/></Border>
+                    </WrapPanel>
+                    <TextBlock Text="{Binding Detail}" Style="{StaticResource SetupMuted}" Margin="0,7,0,5"/>
+                    <TextBlock Text="{Binding Access}" Style="{StaticResource SetupMuted}"/>
+                </StackPanel>
+            </Grid></DataTemplate></ListBox.ItemTemplate>
+        </ListBox>
+        <Border Height="14"/>
+        <WrapPanel>
+            <Button Content="{Binding ConnectLabel}" Command="{Binding ConnectCommand}" Style="{StaticResource SetupButton}" Margin="0,0,10,10" Visibility="{Binding NeedsSignIn, Converter={StaticResource Show}}"/>
+            <Button Content="Test search" Command="{Binding TestCommand}" Style="{StaticResource SetupButton}" Margin="0,0,10,10" ToolTip="Saves this selection and searches for Windows Clock Microsoft."/>
+            <Button x:Name="ApplyButton" Content="Save search settings" Command="{Binding ApplyCommand}" Style="{StaticResource SetupButton}" Margin="0,0,10,10"/>
+            <Button Content="Cancel" Command="{Binding CancelCommand}" Style="{StaticResource SetupButton}" Margin="0,0,10,10" Visibility="{Binding IsBusy, Converter={StaticResource Show}}"/>
+            <Button Content="Copy sign-in link" Command="{Binding CopySignInLinkCommand}" Style="{StaticResource SetupButton}" Margin="0,0,0,10" Visibility="{Binding HasSignInLink, Converter={StaticResource Show}}"/>
+        </WrapPanel>
+        <Expander Header="Use your own API key" Foreground="#F5F5F5" Margin="0,6,0,8" IsEnabled="{Binding IsIdle}">
+            <Border Style="{StaticResource SetupCard}" Margin="0,10,0,0"><StackPanel>
+                <TextBlock Text="Optional for Exa and Tavily when free access runs out. A HasData key is an alternative to browser sign-in for DuckDuckGo. Your account's usage limits apply." Style="{StaticResource SetupMuted}" Margin="0,0,0,12"/>
+                <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                    <PasswordBox x:Name="ApiKey" PasswordChanged="OnKeyChanged" Background="#20FFFFFF" Foreground="#F5F5F5" BorderBrush="#45FFFFFF" BorderThickness="1" Padding="12,10" MaxLength="1024" VerticalContentAlignment="Center" AutomationProperties.Name="Search provider API key"/>
+                    <Button Grid.Column="1" Content="Save key" Command="{Binding UseKeyCommand}" Style="{StaticResource SetupButton}" Margin="12,0,0,0"/>
+                </Grid>
+                <TextBlock Text="Saved securely in Windows Credential Manager." Style="{StaticResource SetupMuted}" Margin="0,10,0,0"/>
+            </StackPanel></Border>
+        </Expander>
+        <TextBlock Text="{Binding Status}" Style="{StaticResource SetupMuted}" Margin="0,4,0,8" AutomationProperties.LiveSetting="Polite"/>
+    </StackPanel>
+</UserControl>

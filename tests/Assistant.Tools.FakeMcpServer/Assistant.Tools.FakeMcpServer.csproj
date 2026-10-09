@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- A stand-in for a connected app's MCP server in the tools' tests. As a program it speaks MCP over its standard streams, in the
+       era and with the quirks its arguments say; its protocol logic (FakeMcpServerCore) is also used in-process by the HTTP tests. -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+</Project>

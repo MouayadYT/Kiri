@@ -1,0 +1,42 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- The visual language of the reference designs, merged into the application resources: design tokens, glyphs,
+         then control styles built from the tokens. -->
+    <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="Tokens/Typography.xaml" />
+        <ResourceDictionary Source="Tokens/Spacing.xaml" />
+        <ResourceDictionary Source="Tokens/Radii.xaml" />
+        <ResourceDictionary Source="Tokens/Surfaces.xaml" />
+        <ResourceDictionary Source="Tokens/Strokes.xaml" />
+        <ResourceDictionary Source="Tokens/States.xaml" />
+        <ResourceDictionary Source="Tokens/Shadows.xaml" />
+        <ResourceDictionary Source="Tokens/Motion.xaml" />
+        <ResourceDictionary Source="Tokens/Voice.xaml" />
+        <ResourceDictionary Source="Tokens/Orb.xaml" />
+        <ResourceDictionary Source="Tokens/Caret.xaml" />
+        <ResourceDictionary Source="Icons.xaml" />
+        <ResourceDictionary Source="Controls/IconButton.xaml" />
+        <ResourceDictionary Source="Controls/Menu.xaml" />
+        <ResourceDictionary Source="Controls/Surface.xaml" />
+        <ResourceDictionary Source="Controls/PromptInput.xaml" />
+        <ResourceDictionary Source="Controls/Messages.xaml" />
+        <ResourceDictionary Source="Controls/ResultContent.xaml" />
+        <ResourceDictionary Source="Controls/Conversation.xaml" />
+        <ResourceDictionary Source="Controls/Launcher.xaml" />
+        <ResourceDictionary Source="Controls/QuickActions.xaml" />
+        <ResourceDictionary Source="Controls/SearchResults.xaml" />
+        <ResourceDictionary Source="Controls/ActivityChip.xaml" />
+        <ResourceDictionary Source="Controls/AssistantOrb.xaml" />
+        <ResourceDictionary Source="Controls/History.xaml" />
+        <ResourceDictionary Source="Controls/Settings.xaml" />
+        <ResourceDictionary Source="Controls/SettingsPages.xaml" />
+        <ResourceDictionary Source="Controls/Capture.xaml" />
+        <ResourceDictionary Source="Controls/ImageSearch.xaml" />
+        <ResourceDictionary Source="Controls/IntegrationOffer.xaml" />
+        <ResourceDictionary Source="Controls/ActionCards.xaml" />
+        <ResourceDictionary Source="Controls/ToolConfirmation.xaml" />
+        <ResourceDictionary Source="Controls/AgentTask.xaml" />
+    </ResourceDictionary.MergedDictionaries>
+
+</ResourceDictionary>

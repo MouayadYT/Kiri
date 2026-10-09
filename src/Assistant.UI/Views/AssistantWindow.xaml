@@ -1,0 +1,557 @@
+<Window x:Class="Assistant.UI.Views.AssistantWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:sys="clr-namespace:System;assembly=System.Runtime"
+        xmlns:controls="clr-namespace:Assistant.UI.Controls"
+        xmlns:views="clr-namespace:Assistant.UI.Views"
+        Title="Assistant"
+        SizeToContent="WidthAndHeight"
+        WindowStyle="None" AllowsTransparency="True" Background="Transparent"
+        ResizeMode="NoResize" ShowInTaskbar="False" Topmost="True"
+        WindowStartupLocation="Manual">
+
+    <!-- The Assistant's one window. Its glass is a single surface that is the Search or Ask pill and, grown, the floating
+         conversation panel: code-behind draws it in whatever form it has, and the contents of each state sit on it as
+         layers of their own, faded in and out as it grows. Layout measured from the Search or Ask and floating
+         conversation references (2x images), in DIPs. Colors, type, strokes, glyphs and the shadow come from the shared
+         theme (Themes/Theme.xaml). -->
+    <Window.Resources>
+        <controls:InvertedVisibilityConverter x:Key="InvertedVisibility" />
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibility" />
+
+        <!-- The two forms of the glass. Both are centered in the window and hang from the same line, so the pill grows
+             straight down into the panel and narrows a little as it goes. -->
+        <sys:Double x:Key="Compact.Width">520</sys:Double>
+        <sys:Double x:Key="Compact.Height">91</sys:Double>
+
+        <!-- The answer to a sum, in the bar under the field, measured from the calculator reference (2x recording, in DIPs): the bar
+             grows from 91 to 170 tall to hold a card 60 tall, 20 in from its sides, starting where the field ends and 19 above the
+             bar's bottom; the copy button is a 24 disc, 14 in from the card's right. -->
+        <sys:Double x:Key="Compact.CalculationExtra">79</sys:Double>
+        <sys:Double x:Key="Compact.LayerHeight">170</sys:Double>
+        <sys:Double x:Key="Calculation.CardHeight">60</sys:Double>
+        <Thickness x:Key="Calculation.CardMargin">20,0,20,0</Thickness>
+        <sys:Double x:Key="Calculation.CardCorner">22</sys:Double>
+
+        <!-- The Working pill the bar folds into while an answer is on its way, measured from the answer reference: 53 tall, as wide
+             as its words need ("Working" 148, "Looking into it" 196), its spinner centered 22.5 from its left and its words starting 59
+             from its left and ending 20.5 before its right. -->
+        <sys:Double x:Key="Working.Height">53</sys:Double>
+        <sys:Double x:Key="Working.LabelLeft">59</sys:Double>
+        <sys:Double x:Key="Working.LabelRight">20.5</sys:Double>
+        <sys:Double x:Key="Conversation.PanelWidth">418</sys:Double>
+
+        <!-- A result shown alone, as a pill (the home reference: a device that was just switched): as wide as the panel and 73 tall, its row 65 tall,
+             15.5 in from the pill's sides and 4 from its top and bottom. -->
+        <sys:Double x:Key="Result.Height">73</sys:Double>
+        <Thickness x:Key="Result.RowMargin">15.5,4,15.5,4</Thickness>
+        <sys:Double x:Key="Conversation.PanelHeight">598</sys:Double>
+
+        <!-- The launcher's category panel under the pill, measured from its reference: as wide as the pill, 10.5 below
+             it, 215.5 tall, its four 48-tall rows starting 11.75 below its top. -->
+        <sys:Double x:Key="Launcher.Width">520</sys:Double>
+        <sys:Double x:Key="Launcher.Height">215.5</sys:Double>
+        <sys:Double x:Key="Launcher.Gap">10.5</sys:Double>
+        <Thickness x:Key="Launcher.Margin">0,129.5,0,0</Thickness>
+        <Thickness x:Key="Launcher.ListMargin">0,11.75,0,0</Thickness>
+
+        <!-- The same panel holds the search results while something is typed. It is as tall as its chips and sections and
+             no taller than the Search reference's, 409, and its rows scroll under its rounded edges beyond that. The chips
+             that narrow the results to a kind lie 19.5 below its top and 24 tall (Themes/Controls/SearchResults.xaml), the
+             first row begins 17 under them, as in the reference, and the last ends that far above its bottom (the last
+             section brings 2 of it). -->
+        <sys:Double x:Key="SearchResults.MaxHeight">409</sys:Double>
+        <Thickness x:Key="SearchResults.Margin">0,17,0,9.75</Thickness>
+
+        <!-- Room around the glass for its shadow, which falls mostly below. The window is as wide as the pill plus this,
+             and as tall as the pill, or the panel, plus it; the shadow is cut off at this margin around the glass. -->
+        <Thickness x:Key="Assistant.ShadowGutter">45,28,45,64</Thickness>
+
+        <!-- Where the glass and its contents hang from: the top of the gutter. -->
+        <Thickness x:Key="Assistant.SurfaceMargin">0,28,0,0</Thickness>
+
+        <!-- The Search or Ask field makes room at its left for the assistant orb while the microphone listens for speech (step 125): the orb is 40
+             across, 22 from the pill's edge, and the words begin 24 after it. -->
+        <Style x:Key="BarPromptInput" TargetType="controls:PromptInputControl"
+               BasedOn="{StaticResource {x:Type controls:PromptInputControl}}">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding Voice.ShowsOrb}" Value="True">
+                    <Setter Property="Padding" Value="86,0,30,2.5" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- Buttons sit this far in from the panel's edges. -->
+        <Thickness x:Key="Conversation.ButtonInset">16</Thickness>
+
+        <!-- The follow-up composer stands between the bottom buttons, and stays there while an answer comes (its Stop
+             button is at its right end then): as tall as a button, 10 from the speaker and the voice button (which are 36 wide, 16
+             in from the sides) and level with them, growing upward as the text takes more lines. Provisional until a
+             reference shows one. -->
+        <Thickness x:Key="Conversation.ComposerMargin">62,0,62,16</Thickness>
+        <sys:Double x:Key="Conversation.ComposerCorner">20</sys:Double>
+
+        <!-- The chips of what is attached to the conversation sit inside the composer's glass, above what is typed. -->
+        <Thickness x:Key="Conversation.AttachmentsMargin">12,10,12,0</Thickness>
+
+        <!-- Selected text waiting to be asked about, and its quick actions, begin where the first message would: under the top
+             buttons, 30 in from each side. -->
+        <Thickness x:Key="Conversation.QuickActionsMargin">30,84,30,0</Thickness>
+        <CornerRadius x:Key="Conversation.SelectionCorner">14</CornerRadius>
+
+        <!-- Messages scroll under the buttons and fade into the glass on the way, rather than stopping at an edge: clear
+             88 from the panel's top and bottom, and gone 16 from its top and 14 from its bottom, as in the reference.
+             Each point is a distance from the edge and the messages' opacity there. -->
+        <PointCollection x:Key="Conversation.TopFade">16,0 52,0.38 88,1</PointCollection>
+        <PointCollection x:Key="Conversation.BottomFade">14,0 55,0.5 88,1</PointCollection>
+    </Window.Resources>
+
+    <Window.CommandBindings>
+        <CommandBinding Command="ApplicationCommands.Close" Executed="OnCloseExecuted" />
+    </Window.CommandBindings>
+
+    <!-- Code-behind sizes the root: as wide as the pill and its gutter, and tall enough for the pill, or, once it has
+         grown, the panel. Everything in it comes and goes together (SurfaceHost). -->
+    <Grid x:Name="Root">
+        <Grid x:Name="SurfaceHost">
+
+            <!-- The glass, its shadow and its glow, sized and shaped by code-behind as the surface grows. It is centered,
+                 so its left edge follows its width. -->
+            <Grid x:Name="SurfaceArea" HorizontalAlignment="Center" VerticalAlignment="Top"
+                  Margin="{StaticResource Assistant.SurfaceMargin}">
+
+                <!-- Code-behind clips the glass's area out of this layer, so the shadow never shows through the glass. -->
+                <Grid x:Name="ShadowLayer" IsHitTestVisible="False">
+                    <controls:SurfaceShape x:Name="ShadowCaster" Style="{StaticResource SurfaceShadowCaster}" />
+                </Grid>
+
+                <!-- Translucent over a blurred backdrop (see code-behind), or opaque when Windows has no blur to give. -->
+                <controls:SurfaceShape x:Name="Surface" Style="{StaticResource GlassSurface}" />
+
+                <!-- The microphone visualizers, only while voice input is on: the bar's glow, and the conversation's, which
+                     takes over when the bar grows into it with the microphone on. Code-behind clips them to the glass. -->
+                <Grid x:Name="GlowLayer" IsHitTestVisible="False">
+                    <controls:VoiceGlow x:Name="BarGlow" IsActive="{Binding Voice.IsListening}" Source="{Binding Voice}"
+                                        Shape="{StaticResource VoiceGlow.Bar}" Fill="{StaticResource Brush.VoiceGlow}" />
+                    <controls:VoiceGlow x:Name="PanelGlow" IsActive="{Binding Voice.IsListening}" Source="{Binding Voice}"
+                                        Shape="{StaticResource VoiceGlow.Panel}" Fill="{StaticResource Brush.VoiceGlow}" />
+                </Grid>
+            </Grid>
+
+            <!-- The launcher's category panel, its own piece of glass under the pill while the field is empty: with its shadow,
+                 which leaves the pill's glass and its own alone (code-behind clips them out), its glass, blurred like the
+                 pill's, and its rows. It fades in and out with the rest of the surface (SurfaceHost). -->
+            <Grid x:Name="LauncherLayer" HorizontalAlignment="Center" VerticalAlignment="Top"
+                  Width="{StaticResource Launcher.Width}" Height="{StaticResource Launcher.Height}"
+                  Margin="{StaticResource Launcher.Margin}" Visibility="Collapsed" RenderTransformOrigin="0.5,0">
+                <!-- While the panel arrives it grows down out of the bar: code-behind moves this scale from a little under 1 to 1, from the top's middle.
+                     It is one transform whose numbers change, so that where the panel is drawn is known at once and not after the next layout. -->
+                <Grid.RenderTransform>
+                    <ScaleTransform x:Name="LauncherScale" />
+                </Grid.RenderTransform>
+                <Grid x:Name="LauncherShadowLayer" IsHitTestVisible="False">
+                    <controls:PanelShape x:Name="LauncherShadowCaster" Style="{StaticResource LauncherShadowCaster}" />
+                </Grid>
+                <controls:PanelShape x:Name="LauncherSurface" Style="{StaticResource GlassLauncher}" />
+                <ListBox x:Name="LauncherList" Style="{StaticResource CommandList}" VerticalAlignment="Top"
+                         Margin="{StaticResource Launcher.ListMargin}"
+                         ItemsSource="{Binding Launcher.Items}"
+                         SelectedItem="{Binding Launcher.SelectedItem, Mode=TwoWay}"
+                         AutomationProperties.Name="Categories" />
+
+                <!-- While something is typed, the sections of results take the panel over: code-behind fits the panel to
+                     them, and they are clipped to its outline, so rows scroll under its corners rather than stopping at
+                     a line. -->
+                <Grid x:Name="ResultsHost" controls:CornerClip.CornerSize="{StaticResource Radius.Launcher}"
+                      Visibility="Collapsed">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+
+                    <!-- The chips that narrow the results to one kind (Ctrl+1 to Ctrl+4), over the list; the list of a result's
+                         actions has none. -->
+                    <ItemsControl x:Name="ScopeChips" Style="{StaticResource SearchScopeChips}" ItemsSource="{Binding Results.Chips}"
+                                  Margin="{StaticResource SearchScopeChips.Margin}" AutomationProperties.Name="Kinds of results"
+                                  Visibility="{Binding Results.IsShowingAlternates, Converter={StaticResource InvertedVisibility}}" />
+                    <ScrollViewer x:Name="ResultsScroller" Grid.Row="1" VerticalScrollBarVisibility="Hidden"
+                                  HorizontalScrollBarVisibility="Disabled" Focusable="False" IsTabStop="False">
+                        <StackPanel x:Name="ResultsContent" Margin="{StaticResource SearchResults.Margin}">
+                            <TextBlock x:Name="ResultsNotice" Text="{Binding Results.Notice}" Style="{StaticResource SearchResultsMessage}"
+                                       Visibility="{Binding Results.HasNotice, Converter={StaticResource BooleanToVisibility}}" />
+                            <ItemsControl x:Name="ResultsList" Style="{StaticResource SearchResultSections}"
+                                          ItemsSource="{Binding Results.Sections}" AutomationProperties.Name="Search results" />
+                            <TextBlock x:Name="ResultsEmpty" Text="{Binding Results.EmptyMessage}" Style="{StaticResource SearchResultsMessage}"
+                                       Visibility="{Binding Results.HasEmptyMessage, Converter={StaticResource BooleanToVisibility}}" />
+                        </StackPanel>
+                    </ScrollViewer>
+                </Grid>
+            </Grid>
+
+            <!-- The Search or Ask bar's contents, on the pill: fixed in place and clipped to the glass as it grows, and
+                 faded out as it does. Under the field lies the answer to a sum, which shows as the bar grows to hold it. -->
+            <Grid x:Name="CompactLayer" HorizontalAlignment="Center" VerticalAlignment="Top"
+                  Width="{StaticResource Compact.Width}" Height="{StaticResource Compact.LayerHeight}"
+                  Margin="{StaticResource Assistant.SurfaceMargin}">
+                <Grid.RowDefinitions>
+                    <!-- As tall as the bar at rest (Compact.Height). -->
+                    <RowDefinition Height="91" />
+                    <RowDefinition />
+                </Grid.RowDefinitions>
+                <controls:PromptInputControl x:Name="PromptInput" Style="{StaticResource BarPromptInput}" Placeholder="{Binding Placeholder}"
+                                             Text="{Binding Query, UpdateSourceTrigger=PropertyChanged}"
+                                             SubmitCommand="{Binding AskCommand}"
+                                             CompletionText="{Binding Completion}" TrailingContent="{Binding TrailingIcon}"
+                                             TrailingLabel="{Binding RouteLabel}"
+                                             LiveText="{Binding Voice.Transcript}"
+                                             MicrophoneCommand="{Binding Voice.ToggleCommand}"
+                                             IsMicrophoneActive="{Binding Voice.IsListening}" />
+
+                <!-- The assistant orb, at the left of the pill while the microphone listens for speech: its bright boundary follows the same microphone
+                     level as the glow along the pill's bottom edge. It is not there when the user types. -->
+                <controls:AssistantOrb x:Name="BarOrb" HorizontalAlignment="Left" VerticalAlignment="Center"
+                                       Width="40" Height="40" Margin="22,0,0,2.5" IsHitTestVisible="False"
+                                       State="Listening" AmplitudeSource="{Binding Voice.OrbAmplitude}"
+                                       Visibility="{Binding Voice.ShowsOrb, Converter={StaticResource BooleanToVisibility}}" />
+
+                <!-- The answer to the sum that is typed (PROJECT_SPEC §4.1): the sum as it was typed, the value under it and a button that
+                     copies it, on a lighter plate of glass. Code-behind fades it in and out with the bar's growth. -->
+                <Grid x:Name="CalculationCard" Grid.Row="1" VerticalAlignment="Top" Height="{StaticResource Calculation.CardHeight}"
+                      Margin="{StaticResource Calculation.CardMargin}" Opacity="0" Visibility="Collapsed"
+                      DataContext="{Binding Calculation}" AutomationProperties.Name="{Binding Value}"
+                      AutomationProperties.HelpText="{Binding Caption}">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <controls:PanelShape Grid.ColumnSpan="2" Fill="{StaticResource Brush.Control.Glass}"
+                                         Stroke="{StaticResource Brush.Stroke.ControlRim}"
+                                         StrokeThickness="{StaticResource StrokeThickness.Hairline}"
+                                         CornerSize="{StaticResource Calculation.CardCorner}" />
+                    <StackPanel VerticalAlignment="Center" Margin="16,0,10,1">
+                        <TextBlock x:Name="CalculationCaption" Text="{Binding Caption}" FontFamily="{StaticResource Font.Text}" FontSize="11"
+                                   Foreground="{StaticResource Brush.Text.Secondary}" TextTrimming="CharacterEllipsis" />
+                        <TextBlock x:Name="CalculationValue" Text="{Binding Value}" FontFamily="{StaticResource Font.Text}" FontSize="16.5"
+                                   FontWeight="SemiBold" Foreground="{StaticResource Brush.Text.Message}" TextTrimming="CharacterEllipsis"
+                                   Margin="0,1,0,0" />
+                    </StackPanel>
+                    <Button x:Name="CalculationCopyButton" Grid.Column="1" Style="{StaticResource CopyButton}"
+                            Command="{Binding CopyCommand}" VerticalAlignment="Center" Margin="0,0,14,0"
+                            AutomationProperties.Name="Copy result" />
+                </Grid>
+            </Grid>
+
+            <!-- The Searching chip on the bar: a small piece of glass of its own, hanging 10.5 below whatever lies under the
+                 pill (the launcher's panel or the results, when they show), with a shadow of its own, while a search, the
+                 model or a tool runs. Code-behind places it, and makes the window tall enough for it while it shows. -->
+            <Grid x:Name="ActivityLayer" HorizontalAlignment="Center" VerticalAlignment="Top">
+                <controls:ActivityChip x:Name="BarChip" Text="{Binding Activity.StatusText}"
+                                       CancelCommand="{Binding Activity.CancelCommand}" />
+            </Grid>
+
+            <!-- The Working pill's contents, on the glass while it is the pill (the bar folds into it when a question is asked, and it
+                 opens into the conversation when the answer comes): the spinner, and what the Assistant is doing ("Working", "Looking into
+                 it"), which comes in out of a blur and then breathes slowly. Code-behind sizes and clips it to the glass. -->
+            <Grid x:Name="WorkingLayer" HorizontalAlignment="Center" VerticalAlignment="Top" Height="{StaticResource Working.Height}"
+                  Margin="{StaticResource Assistant.SurfaceMargin}" Visibility="Collapsed" IsHitTestVisible="False">
+                <controls:SearchingIndicator x:Name="WorkingIndicator" HorizontalAlignment="Left" VerticalAlignment="Center"
+                                             Margin="10,0,0,0" Motion="{StaticResource Motion.SearchingRing}"
+                                             RenderTransformOrigin="0.5,0.5">
+                    <controls:SearchingIndicator.RenderTransform>
+                        <ScaleTransform x:Name="WorkingIndicatorScale" ScaleX="1.1" ScaleY="1.1" />
+                    </controls:SearchingIndicator.RenderTransform>
+                </controls:SearchingIndicator>
+                <!-- 59 from the pill's left (Working.LabelLeft). -->
+                <Border x:Name="WorkingLabelHost" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="59,0,0,0">
+                    <TextBlock x:Name="WorkingLabel" FontFamily="{StaticResource Font.Text}" FontSize="17" FontWeight="SemiBold"
+                               Foreground="{StaticResource Brush.Text.Activity}" Margin="0,0,0,1.5"
+                               AutomationProperties.LiveSetting="Polite" />
+                </Border>
+            </Grid>
+
+            <!-- A result alone on the glass, while the glass is its pill: the device of the home the Assistant has just switched (the home reference).
+                 Its glyph switches the device; a press anywhere else opens the conversation, with what was done. Code-behind clips it to the glass. -->
+            <Grid x:Name="ResultLayer" HorizontalAlignment="Center" VerticalAlignment="Top"
+                  Width="{StaticResource Conversation.PanelWidth}" Height="{StaticResource Result.Height}"
+                  Margin="{StaticResource Assistant.SurfaceMargin}" Visibility="Collapsed">
+                <ContentPresenter x:Name="ResultContent" Margin="{StaticResource Result.RowMargin}" ContentTemplate="{StaticResource HomeDevice.Row}" />
+            </Grid>
+
+            <!-- The floating conversation's contents, on the panel: fixed in place, at the size they rest at, so nothing
+                 in them reflows while the glass grows; clipped to the glass and faded in as it does. -->
+            <Grid x:Name="ConversationLayer" HorizontalAlignment="Center" VerticalAlignment="Top"
+                  Width="{StaticResource Conversation.PanelWidth}" Height="{StaticResource Conversation.PanelHeight}"
+                  Margin="{StaticResource Assistant.SurfaceMargin}">
+
+                <!-- The conversation, directly on the glass: it fills the panel, with no surface of its own, and scrolls
+                     without a visible scroll bar. Its messages (Themes/Controls/Messages.xaml) are 30 in from the panel's
+                     sides and rest between the top and bottom buttons, the first 84.25 below the panel's top and the last
+                     68 above its bottom; scrolled, they pass under the buttons and fade out. Code-behind clips it to the
+                     panel, so its only edge is the panel's. It is the view the History window's workspace uses too. -->
+                <views:ConversationView x:Name="Conversation" Messages="{Binding Messages}"
+                                        ContentPadding="30,84.25,30,68"
+                                        TopFade="{StaticResource Conversation.TopFade}"
+                                        BottomFade="{StaticResource Conversation.BottomFade}"
+                                        WorkingText="{Binding Activity.StatusText}" />
+
+                <!-- Text selected in another app, opened here with the shortcut for it (PROJECT_SPEC §4.5): the start of what was
+                     selected on a faint plate, and the quick actions under it, until the first question is asked or the text's
+                     chip is taken off. Picking an action writes its request in the composer; it never sends it. -->
+                <StackPanel x:Name="QuickActionsPanel" VerticalAlignment="Top"
+                            Margin="{StaticResource Conversation.QuickActionsMargin}">
+                    <StackPanel.Style>
+                        <Style TargetType="StackPanel">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding ShowQuickActions}" Value="True">
+                                    <Setter Property="Visibility" Value="Visible" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </StackPanel.Style>
+                    <Border x:Name="SelectionCard" Padding="14,10,14,12" Background="{StaticResource Brush.Surface.FileIcon}"
+                            CornerRadius="{StaticResource Conversation.SelectionCorner}"
+                            AutomationProperties.Name="{Binding SelectionCaption}">
+                        <StackPanel>
+                            <TextBlock x:Name="SelectionCaptionText" Style="{StaticResource Text.Caption}"
+                                       Text="{Binding SelectionCaption}" TextTrimming="CharacterEllipsis" />
+                            <TextBlock x:Name="SelectionPreviewText" Style="{StaticResource Text.BodySmall}" Margin="0,4,0,0"
+                                       Foreground="{StaticResource Brush.Text.Message}" Text="{Binding SelectionPreview}"
+                                       TextWrapping="Wrap" TextTrimming="CharacterEllipsis"
+                                       LineHeight="18" LineStackingStrategy="BlockLineHeight" MaxHeight="54" />
+                            <!-- Said only when the browser sent the page's text around the selection too (step 88): more than the selected
+                                 words goes to the model, and the user is told how much. -->
+                            <TextBlock x:Name="SelectionNearbyText" Style="{StaticResource Text.Caption}" Margin="0,6,0,0"
+                                       Text="{Binding SelectionNearbyNotice}" TextTrimming="CharacterEllipsis">
+                                <TextBlock.Visibility>
+                                    <Binding Path="HasSelectionNearbyContext">
+                                        <Binding.Converter>
+                                            <BooleanToVisibilityConverter />
+                                        </Binding.Converter>
+                                    </Binding>
+                                </TextBlock.Visibility>
+                            </TextBlock>
+                        </StackPanel>
+                    </Border>
+                    <ItemsControl x:Name="QuickActionList" Style="{StaticResource QuickActionList}"
+                                  ItemsSource="{Binding QuickActions}" Margin="0,12,0,0"
+                                  AutomationProperties.Name="Quick actions" />
+                </StackPanel>
+
+                <!-- The follow-up composer: a pill of glass to type the next message in, once the conversation has a message.
+                     Enter sends it once no answer is on its way, and Shift+Enter starts a new line. -->
+                <Grid x:Name="Composer" VerticalAlignment="Bottom" Margin="{StaticResource Conversation.ComposerMargin}">
+                    <Grid.Style>
+                        <Style TargetType="Grid">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding ShowsComposer}" Value="True">
+                                    <Setter Property="Visibility" Value="Visible" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Grid.Style>
+                    <controls:PanelShape Fill="{StaticResource Brush.Control.Glass}"
+                                         Stroke="{StaticResource Brush.Stroke.ControlRim}"
+                                         StrokeThickness="{StaticResource StrokeThickness.Hairline}"
+                                         CornerSize="{StaticResource Conversation.ComposerCorner}" />
+                    <StackPanel>
+                        <!-- What could not be attached from File Explorer, file by file: a small amber glyph and the words in
+                             secondary text, as a context warning is drawn, above the chips of what was attached. -->
+                        <Grid x:Name="ComposerNotice" Margin="16,12,16,0" AutomationProperties.Name="{Binding AttachNotice}">
+                            <Grid.Style>
+                                <Style TargetType="Grid">
+                                    <Setter Property="Visibility" Value="Collapsed" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding HasAttachNotice}" Value="True">
+                                            <Setter Property="Visibility" Value="Visible" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Grid.Style>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition />
+                            </Grid.ColumnDefinitions>
+                            <Path Style="{StaticResource IconGlyph}" Stroke="{StaticResource Brush.Glyph.Warning}" StrokeThickness="1.2"
+                                  Data="{StaticResource Icon.Warning}" Stretch="None" VerticalAlignment="Top" Margin="0,2,8,0" />
+                            <TextBlock Grid.Column="1" Style="{StaticResource Text.Caption}" Text="{Binding AttachNotice}"
+                                       TextWrapping="Wrap" />
+                        </Grid>
+                        <!-- What the next question is about, as a row of chips above what is typed, inside the same glass: one
+                             for each picture, file and text attached, in one row that scrolls sideways when they do not fit. -->
+                        <controls:AttachmentChipList x:Name="ComposerAttachments" ItemsSource="{Binding Chips}"
+                                                     Style="{StaticResource AttachmentChipList}"
+                                                     Margin="{StaticResource Conversation.AttachmentsMargin}"
+                                                     AutomationProperties.Name="Attachments" />
+                        <controls:PromptInputControl x:Name="ComposerInput"
+                                                     Placeholder="{Binding ComposerPlaceholder}"
+                                                     Text="{Binding Draft, UpdateSourceTrigger=PropertyChanged}"
+                                                     SubmitCommand="{Binding AskCommand}">
+                            <controls:PromptInputControl.Style>
+                                <Style TargetType="controls:PromptInputControl" BasedOn="{StaticResource ConversationComposerInput}">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsAnswering}" Value="True">
+                                            <Setter Property="Padding" Value="15,7.5,36,7.5" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </controls:PromptInputControl.Style>
+                        </controls:PromptInputControl>
+                    </StackPanel>
+
+                    <!-- Stops the answer while it is worked on or streams in: at the right end of the composer, where a send button would be, so
+                         that it never stands over what is typed. What was said so far stays. -->
+                    <Button x:Name="StopButton" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,5,5"
+                            Width="26" Height="26" Command="{Binding StopCommand}"
+                            ContentTemplate="{StaticResource Glyph.Stop}" AutomationProperties.Name="Stop">
+                        <Button.Style>
+                            <Style TargetType="Button" BasedOn="{StaticResource GlassIconButton}">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                                <Setter Property="Background" Value="{StaticResource Brush.Control.GlassOpen}" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsAnswering}" Value="True">
+                                        <Setter Property="Visibility" Value="Visible" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                    </Button>
+                </Grid>
+
+                <Button x:Name="CloseButton" Style="{StaticResource GlassIconButton}"
+                        HorizontalAlignment="Left" VerticalAlignment="Top" Margin="{StaticResource Conversation.ButtonInset}"
+                        Command="ApplicationCommands.Close" ContentTemplate="{StaticResource Glyph.Close}"
+                        AutomationProperties.Name="Close" />
+
+                <!-- Moves the conversation into the History window. -->
+                <Button x:Name="ExpandButton" Style="{StaticResource GlassIconButton}"
+                        HorizontalAlignment="Right" VerticalAlignment="Top" Margin="{StaticResource Conversation.ButtonInset}"
+                        Command="{Binding OpenInHistoryCommand}" ContentTemplate="{StaticResource Glyph.Expand}"
+                        AutomationProperties.Name="Open in History window" />
+
+                <!-- Spoken responses (step 125). While the Assistant speaks, it is lit and pressing it silences the voice at once, drops what was queued
+                     and keeps the rest of that answer from being said, without stopping the answer; otherwise it reads the newest answer aloud. It gives
+                     its place to the plus while the composer shows, as in the browser answer reference (the plus, the field and the microphone in one row). -->
+                <Button x:Name="SpeakerButton" HorizontalAlignment="Left" VerticalAlignment="Bottom"
+                        Margin="{StaticResource Conversation.ButtonInset}"
+                        Command="{Binding SpeakerCommand}"
+                        ContentTemplate="{StaticResource Glyph.Speaker}"
+                        AutomationProperties.Name="Spoken responses">
+                    <Button.Style>
+                        <Style TargetType="Button" BasedOn="{StaticResource GlassIconButton}">
+                            <Setter Property="AutomationProperties.HelpText" Value="Read the answer aloud" />
+                            <Style.Triggers>
+                                <!-- While the composer shows the plus has this place, unless the Assistant is speaking: then the speaker is here, so the voice can
+                                     be stopped however far the answer has got. -->
+                                <MultiDataTrigger>
+                                    <MultiDataTrigger.Conditions>
+                                        <Condition Binding="{Binding ShowsComposer}" Value="True" />
+                                        <Condition Binding="{Binding IsSpeaking}" Value="False" />
+                                    </MultiDataTrigger.Conditions>
+                                    <Setter Property="Visibility" Value="Collapsed" />
+                                </MultiDataTrigger>
+                                <DataTrigger Binding="{Binding IsSpeaking}" Value="True">
+                                    <Setter Property="Background" Value="{StaticResource Brush.Control.GlassOpen}" />
+                                    <Setter Property="AutomationProperties.HelpText" Value="Stop speaking" />
+                                    <Setter Property="AutomationProperties.ItemStatus" Value="Speaking" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
+                </Button>
+
+                <!-- The plus at the composer's left: its menu offers Photos and Files, as in the reference, and what is chosen is
+                     attached for the next question (Messages/AttachMenu). -->
+                <Button x:Name="AddButton" HorizontalAlignment="Left" VerticalAlignment="Bottom"
+                        Margin="{StaticResource Conversation.ButtonInset}"
+                        ContentTemplate="{StaticResource Glyph.Plus}"
+                        AutomationProperties.Name="Add to the conversation">
+                    <Button.Style>
+                        <Style TargetType="Button" BasedOn="{StaticResource GlassIconButton}">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                            <Style.Triggers>
+                                <MultiDataTrigger>
+                                    <MultiDataTrigger.Conditions>
+                                        <Condition Binding="{Binding ShowsComposer}" Value="True" />
+                                        <Condition Binding="{Binding IsSpeaking}" Value="False" />
+                                    </MultiDataTrigger.Conditions>
+                                    <Setter Property="Visibility" Value="Visible" />
+                                </MultiDataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
+                </Button>
+
+                <!-- Why the microphone stopped, between the bottom buttons, only after it fails. -->
+                <TextBlock x:Name="VoiceStatus" Text="{Binding Voice.FailureMessage}"
+                           HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="68,0,68,26"
+                           TextTrimming="CharacterEllipsis">
+                    <TextBlock.Style>
+                        <Style TargetType="TextBlock" BasedOn="{StaticResource Text.Caption}">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Voice.FailureMessage}" Value="{x:Null}">
+                                    <Setter Property="Visibility" Value="Collapsed" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+                </TextBlock>
+
+                <!-- Switches between voice and typing: while the microphone listens it offers the keyboard, and otherwise
+                     the microphone. -->
+                <Button x:Name="VoiceButton" HorizontalAlignment="Right" VerticalAlignment="Bottom"
+                        Margin="{StaticResource Conversation.ButtonInset}">
+                    <Button.Style>
+                        <Style TargetType="Button" BasedOn="{StaticResource GlassIconButton}">
+                            <Setter Property="Command" Value="{Binding Voice.ToggleCommand}" />
+                            <Setter Property="ContentTemplate" Value="{StaticResource Glyph.Microphone}" />
+                            <Setter Property="AutomationProperties.Name" Value="Use microphone" />
+                            <Style.Triggers>
+                                <!-- While the microphone listens the button offers the keyboard: voice input goes off and what was heard so far is put
+                                     in the composer. Ending the request is the pause, or pressing the microphone again where there is one. -->
+                                <DataTrigger Binding="{Binding Voice.IsListening}" Value="True">
+                                    <Setter Property="Command" Value="{Binding UseKeyboardCommand}" />
+                                    <Setter Property="ContentTemplate" Value="{StaticResource Glyph.Keyboard}" />
+                                    <Setter Property="AutomationProperties.Name" Value="Use keyboard" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
+                </Button>
+
+                <!-- What is being heard while the microphone listens (step 125): the words so far, above the orb, which follows the microphone level
+                     like the glow along the panel's bottom edge. Neither shows while the user types. -->
+                <TextBlock x:Name="VoiceTranscript" Text="{Binding Voice.Transcript}" HorizontalAlignment="Center" VerticalAlignment="Bottom"
+                           Margin="68,0,68,78" TextWrapping="Wrap" TextAlignment="Center" TextTrimming="CharacterEllipsis" MaxHeight="64"
+                           Foreground="{StaticResource Brush.Text.Message}" IsHitTestVisible="False"
+                           Style="{StaticResource Text.BodySmall}">
+                    <TextBlock.Visibility>
+                        <Binding Path="Voice.HasTranscript">
+                            <Binding.Converter>
+                                <BooleanToVisibilityConverter />
+                            </Binding.Converter>
+                        </Binding>
+                    </TextBlock.Visibility>
+                </TextBlock>
+                <controls:AssistantOrb x:Name="PanelOrb" HorizontalAlignment="Center" VerticalAlignment="Bottom"
+                                       Width="52" Height="52" Margin="0,0,0,12" IsHitTestVisible="False"
+                                       State="Listening" AmplitudeSource="{Binding Voice.OrbAmplitude}"
+                                       Visibility="{Binding Voice.ShowsOrb, Converter={StaticResource BooleanToVisibility}}" />
+
+                <!-- Pressing the orb says the request is over: what was said is recognized and asked. It is the thing in the middle that shows the
+                     microphone is on, so it is what a press to stop goes to; the button beside it gives up on voice and brings the keyboard back. -->
+                <Button x:Name="FinishSpeakingButton" HorizontalAlignment="Center" VerticalAlignment="Bottom" Width="60" Height="60" Margin="0,0,0,8"
+                        Command="{Binding Voice.ToggleCommand}" Cursor="Hand" Focusable="False" ToolTip="Done speaking"
+                        AutomationProperties.Name="Done speaking"
+                        Visibility="{Binding Voice.ShowsOrb, Converter={StaticResource BooleanToVisibility}}">
+                    <Button.Template>
+                        <ControlTemplate TargetType="Button">
+                            <Ellipse Fill="Transparent" />
+                        </ControlTemplate>
+                    </Button.Template>
+                </Button>
+            </Grid>
+        </Grid>
+    </Grid>
+</Window>

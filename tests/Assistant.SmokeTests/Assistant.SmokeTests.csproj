@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- The release smoke tests (step 127, RELEASE_CHECKLIST.md): one short check for each thing v1 must do, run through the app's own
+       container and the programs it ships. The app is the only project referenced: its output holds every module and the helper
+       programs (model host, Explorer entry point, browser bridge). The fake engine stands in for llama-server.exe. -->
+  <PropertyGroup>
+    <TargetFramework>net8.0-windows10.0.22621.0</TargetFramework>
+    <PlatformTarget>x64</PlatformTarget>
+    <UseWPF>true</UseWPF>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
+    <PackageReference Include="xunit" Version="2.9.2" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2" PrivateAssets="all" />
+    <ProjectReference Include="../../src/Assistant.UI/Assistant.UI.csproj" />
+    <ProjectReference Include="../Assistant.ModelHost.FakeEngine/Assistant.ModelHost.FakeEngine.csproj" />
+  </ItemGroup>
+
+</Project>

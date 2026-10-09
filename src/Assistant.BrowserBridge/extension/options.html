@@ -1,0 +1,39 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <title></title>
+    <link rel="stylesheet" href="options.css" />
+  </head>
+  <body>
+    <main>
+      <h1 data-i18n="optionsHeading"></h1>
+      <p class="intro" data-i18n="optionsIntro"></p>
+
+      <fieldset>
+        <legend data-i18n="optionsLegend"></legend>
+
+        <label class="choice">
+          <input type="radio" name="contextMode" value="selection" />
+          <span class="words">
+            <span class="name" data-i18n="modeSelectionTitle"></span>
+            <span class="detail" data-i18n="modeSelectionDetail"></span>
+          </span>
+        </label>
+
+        <label class="choice">
+          <input type="radio" name="contextMode" value="nearby" />
+          <span class="words">
+            <span class="name" data-i18n="modeNearbyTitle"></span>
+            <span class="detail" data-i18n="modeNearbyDetail"></span>
+          </span>
+        </label>
+      </fieldset>
+
+      <p id="status" role="status" aria-live="polite"></p>
+    </main>
+    <script type="module" src="options.js"></script>
+  </body>
+</html>

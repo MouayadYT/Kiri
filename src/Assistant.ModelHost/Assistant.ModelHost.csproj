@@ -1,0 +1,33 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- The hidden local inference process the desktop app starts and owns (PROJECT_SPEC §5.6): no window and no
+       console. It serves the model-host protocol defined in Assistant.Core over a named pipe. -->
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows10.0.22621.0</TargetFramework>
+    <PlatformTarget>x64</PlatformTarget>
+    <!-- Source-generated P/Invoke (LibraryImport) for the job object that ties the engine to the host needs unsafe code. -->
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+  <!-- The llama.cpp runtime the host runs as its engine (third_party/llama.cpp), bundled as llama.cpp\ next to the host.
+       Projects that reference this one, the app among them, get it beside their own output too. -->
+  <ItemGroup>
+    <None Include="..\..\third_party\llama.cpp\win-x64\*" Link="llama.cpp\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\..\third_party\llama.cpp\LICENSE*" Link="llama.cpp\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Assistant.ModelHost.Tests" />
+    <InternalsVisibleTo Include="Assistant.SmokeTests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Assistant.Core\Assistant.Core.csproj" />
+  </ItemGroup>
+
+</Project>

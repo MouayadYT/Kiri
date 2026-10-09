@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
+    <PackageReference Include="xunit" Version="2.9.2" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2" PrivateAssets="all" />
+    <ProjectReference Include="../../src/Assistant.Tools/Assistant.Tools.csproj" />
+    <ProjectReference Include="../../src/Assistant.Documents/Assistant.Documents.csproj" />
+    <ProjectReference Include="../Assistant.Tools.FakeMcpServer/Assistant.Tools.FakeMcpServer.csproj" />
+    <!-- The made-up calendar and messaging app that ship beside the app (step 116), run as real programs by the workflow's end-to-end test. -->
+    <ProjectReference Include="../../samples/Assistant.SampleMcpServer/Assistant.SampleMcpServer.csproj" />
+    <!-- Microsoft To Do for the Assistant: its tools and its Graph calls are tested here, over a fake Graph. -->
+    <ProjectReference Include="../../src/Assistant.MicrosoftTodo/Assistant.MicrosoftTodo.csproj" />
+  </ItemGroup>
+</Project>

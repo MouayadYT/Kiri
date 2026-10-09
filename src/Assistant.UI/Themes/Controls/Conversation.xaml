@@ -1,0 +1,145 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:messages="clr-namespace:Assistant.UI.Messages"
+                    xmlns:controls="clr-namespace:Assistant.UI.Controls">
+
+    <!-- The glyphs and glyph style these templates use. StaticResource cannot see sibling dictionaries in Theme.xaml,
+         so each control dictionary merges the dictionaries it needs. The floating conversation's messages are drawn
+         by the shared message templates (Messages.xaml). -->
+    <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="../Tokens/Typography.xaml" />
+        <ResourceDictionary Source="../Tokens/Surfaces.xaml" />
+        <ResourceDictionary Source="../Icons.xaml" />
+        <ResourceDictionary Source="IconButton.xaml" />
+    </ResourceDictionary.MergedDictionaries>
+
+    <!-- Glyphs for the panel's glass buttons (Icons.xaml), stroked or filled with the button's foreground. -->
+    <!-- The dark disc at the end of an attachment chip that takes the attachment off again. Provisional until a reference
+         shows one. -->
+    <Style x:Key="AttachmentRemoveButton" TargetType="Button">
+        <Setter Property="Width" Value="18" />
+        <Setter Property="Height" Value="18" />
+        <Setter Property="Background" Value="{StaticResource Brush.Control.CardButton}" />
+        <Setter Property="Foreground" Value="{StaticResource Brush.Glyph.CardButton}" />
+        <Setter Property="Focusable" Value="False" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Grid Background="Transparent">
+                        <Ellipse Fill="{TemplateBinding Background}" />
+                        <Path Style="{StaticResource IconGlyph}" StrokeThickness="1.3" Data="{StaticResource Icon.Close}"
+                              Stretch="Uniform" Width="6" Height="6" HorizontalAlignment="Center"
+                              VerticalAlignment="Center" />
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- One chip of the row above a composer, for a picture, a document or a piece of text: 28 tall, a rounded plate of a
+         faint white like the file plates of the search rows, with a 22 square icon at its start (the picture's own thumbnail
+         with rounded corners, or a file or text glyph), the name cut with an ellipsis, and the dark disc at its end that
+         takes it off. Pointing at it shows where it is. Provisional until a reference shows one. -->
+    <DataTemplate x:Key="Composer.Chip" DataType="{x:Type messages:AttachmentChip}">
+        <Border x:Name="Chip" Height="28" CornerRadius="10" Margin="0,0,6,6" Padding="3,0,5,0"
+                Background="{StaticResource Brush.Surface.FileIcon}" ToolTip="{Binding Detail}"
+                TextElement.Foreground="{StaticResource Brush.Text.Message}" AutomationProperties.Name="{Binding Title}">
+            <StackPanel Orientation="Horizontal">
+                <Grid Width="22" Height="22" Margin="0,0,7,0" VerticalAlignment="Center">
+                    <Border x:Name="Thumbnail" CornerRadius="7" Background="{StaticResource Brush.Surface.Bubble}"
+                            Visibility="Collapsed">
+                        <Border CornerRadius="7">
+                            <Border.Background>
+                                <ImageBrush ImageSource="{Binding Image.Thumbnail}" Stretch="UniformToFill" />
+                            </Border.Background>
+                        </Border>
+                    </Border>
+                    <Path x:Name="Glyph" Style="{StaticResource IconGlyph}" StrokeThickness="1" Stretch="Uniform"
+                          Data="{StaticResource Icon.Document}" Width="9.5" Height="12.2"
+                          HorizontalAlignment="Center" VerticalAlignment="Center" />
+                </Grid>
+                <TextBlock Style="{StaticResource Text.Caption}" Text="{Binding Title}" MaxWidth="110"
+                           Foreground="{StaticResource Brush.Text.Message}" TextTrimming="CharacterEllipsis"
+                           VerticalAlignment="Center" />
+                <Button Style="{StaticResource AttachmentRemoveButton}" Margin="7,0,0,0" VerticalAlignment="Center"
+                        Command="{Binding DataContext.RemoveAttachmentCommand, RelativeSource={RelativeSource AncestorType=controls:AttachmentChipList}}"
+                        CommandParameter="{Binding}" AutomationProperties.Name="{Binding RemoveName}" />
+            </StackPanel>
+        </Border>
+        <DataTemplate.Triggers>
+            <DataTrigger Binding="{Binding Kind}" Value="Image">
+                <Setter TargetName="Thumbnail" Property="Visibility" Value="Visible" />
+                <Setter TargetName="Glyph" Property="Visibility" Value="Collapsed" />
+            </DataTrigger>
+            <DataTrigger Binding="{Binding Kind}" Value="Text">
+                <Setter TargetName="Glyph" Property="Data" Value="{StaticResource Icon.TextLines}" />
+                <Setter TargetName="Glyph" Property="Width" Value="11" />
+                <Setter TargetName="Glyph" Property="Height" Value="9.2" />
+            </DataTrigger>
+        </DataTemplate.Triggers>
+    </DataTemplate>
+
+    <!-- Those chips side by side, wrapping onto a second line and no further (68 tall: two chips and the gap under each);
+         beyond that they scroll under a fade (the control's code). No room is taken while there are none. -->
+    <Style x:Key="AttachmentChipList" TargetType="controls:AttachmentChipList">
+        <Setter Property="Focusable" Value="False" />
+        <Setter Property="IsTabStop" Value="False" />
+        <Setter Property="ItemTemplate" Value="{StaticResource Composer.Chip}" />
+        <Setter Property="ItemsPanel">
+            <Setter.Value>
+                <ItemsPanelTemplate>
+                    <WrapPanel Orientation="Horizontal" />
+                </ItemsPanelTemplate>
+            </Setter.Value>
+        </Setter>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="controls:AttachmentChipList">
+                    <ScrollViewer x:Name="PART_Scroller" HorizontalScrollBarVisibility="Disabled"
+                                  VerticalScrollBarVisibility="Hidden" Focusable="False" IsTabStop="False"
+                                  CanContentScroll="False" MaxHeight="68">
+                        <ItemsPresenter />
+                    </ScrollViewer>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+        <Style.Triggers>
+            <Trigger Property="HasItems" Value="False">
+                <Setter Property="Visibility" Value="Collapsed" />
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+
+    <DataTemplate x:Key="Glyph.Close">
+        <Path Style="{StaticResource IconGlyph}" StrokeThickness="1.6" Data="{StaticResource Icon.Close}" />
+    </DataTemplate>
+
+    <DataTemplate x:Key="Glyph.Expand">
+        <Path Style="{StaticResource IconGlyph}" StrokeThickness="1.6" Data="{StaticResource Icon.Expand}" />
+    </DataTemplate>
+
+    <!-- The speaker is solid and its waves are softer, a little to the left of center as a whole. -->
+    <DataTemplate x:Key="Glyph.Speaker">
+        <Grid Width="16" Height="12.2" Margin="0,0,0.7,0">
+            <Path Fill="{Binding Path=(TextElement.Foreground), RelativeSource={RelativeSource Self}}"
+                  Data="{StaticResource Icon.Speaker}" />
+            <Path Style="{StaticResource IconGlyph}" StrokeThickness="1.3" Opacity="0.7"
+                  Data="{StaticResource Icon.SpeakerWaves}" />
+        </Grid>
+    </DataTemplate>
+
+    <DataTemplate x:Key="Glyph.Keyboard">
+        <Path Style="{StaticResource IconGlyph}" StrokeThickness="1.25" Data="{StaticResource Icon.Keyboard}" />
+    </DataTemplate>
+
+    <DataTemplate x:Key="Glyph.Microphone">
+        <Path Style="{StaticResource IconGlyph}" Data="{StaticResource Icon.MicrophoneSmall}" />
+    </DataTemplate>
+
+    <!-- A filled rounded square, the usual sign for stopping. -->
+    <DataTemplate x:Key="Glyph.Stop">
+        <Rectangle Width="11" Height="11" RadiusX="2.5" RadiusY="2.5"
+                   Fill="{Binding Path=(TextElement.Foreground), RelativeSource={RelativeSource Self}}" />
+    </DataTemplate>
+
+</ResourceDictionary>

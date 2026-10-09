@@ -1,0 +1,180 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+                    xmlns:po="http://schemas.microsoft.com/winfx/2006/xaml/presentation/options"
+                    xmlns:sys="clr-namespace:System;assembly=System.Runtime"
+                    xmlns:controls="clr-namespace:Assistant.UI.Controls"
+                    xmlns:ims="clr-namespace:Assistant.UI.ImageSearch"
+                    mc:Ignorable="po">
+
+    <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="../Tokens/Typography.xaml" />
+        <ResourceDictionary Source="../Tokens/Surfaces.xaml" />
+        <ResourceDictionary Source="../Tokens/Strokes.xaml" />
+        <ResourceDictionary Source="../Tokens/States.xaml" />
+        <ResourceDictionary Source="../Icons.xaml" />
+        <ResourceDictionary Source="IconButton.xaml" />
+    </ResourceDictionary.MergedDictionaries>
+
+    <!-- The image search results window (PROJECT_SPEC §4.6), measured from its reference ("Results from Google"), whose pixels are twice
+         the DIPs here: a panel 412.5 wide, the window's buttons at the top left, its title after them, two columns of cards 178 wide with
+         16 between them and 20 from the panel's edges, the first card 81.5 down, and a link along the bottom over a light fade. -->
+    <sys:Double x:Key="ImageSearch.Width">412.5</sys:Double>
+    <sys:Double x:Key="ImageSearch.Height">664</sys:Double>
+    <sys:Double x:Key="ImageSearch.CaptionHeight">48</sys:Double>
+    <sys:Double x:Key="ImageSearch.ColumnSpacing">16</sys:Double>
+    <sys:Double x:Key="ImageSearch.ThumbnailCorner">14</sys:Double>
+    <Thickness x:Key="ImageSearch.CardsMargin">20,81.5,20.5,64</Thickness>
+    <Thickness x:Key="ImageSearch.CardMargin">0,0,0,22</Thickness>
+    <Thickness x:Key="ImageSearch.TitleMargin">107,14.5,20,0</Thickness>
+    <Thickness x:Key="ImageSearch.ButtonsMargin">19,18.75,0,0</Thickness>
+    <Thickness x:Key="ImageSearch.ButtonSpacing">0,0,9.75,0</Thickness>
+    <sys:Double x:Key="FontSize.ImageSearchTitle">15.5</sys:Double>
+    <sys:Double x:Key="FontSize.ImageSearchCard">11.6</sys:Double>
+    <sys:Double x:Key="FontSize.ImageSearchLink">12.8</sys:Double>
+    <PointCollection x:Key="ImageSearch.TopFade">0,0 30,0.35 66,1</PointCollection>
+    <sys:Double x:Key="ImageSearch.FooterHeight">48</sys:Double>
+
+    <!-- A card's words: the title in white, semibold, and the site in the reference's gray (123, 123, 131), and the link in its blue. -->
+    <SolidColorBrush x:Key="Brush.Text.ImageSearchTitle" Color="#F8F8F8" po:Freeze="True" />
+    <SolidColorBrush x:Key="Brush.Text.ImageSearchSource" Color="#7B7B83" po:Freeze="True" />
+    <SolidColorBrush x:Key="Brush.Text.LinkBlue" Color="#0084FF" po:Freeze="True" />
+    <SolidColorBrush x:Key="Brush.Surface.ImageSearchThumbnail" Color="#2A2A33" po:Freeze="True" />
+
+    <!-- The glass of the bar along the bottom: a neutral gray over the blurred cards, about two thirds opaque, as in the reference. -->
+    <SolidColorBrush x:Key="Brush.Surface.ImageSearchFooter" Color="#A1343434" po:Freeze="True" />
+
+    <Style TargetType="controls:FrostedBar">
+        <Setter Property="Focusable" Value="False" />
+        <Setter Property="IsTabStop" Value="False" />
+        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+        <Setter Property="VerticalContentAlignment" Value="Stretch" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="controls:FrostedBar">
+                    <Grid ClipToBounds="True">
+                        <Rectangle x:Name="PART_Blur" Margin="-24">
+                            <Rectangle.Effect>
+                                <BlurEffect Radius="8" KernelType="Gaussian" RenderingBias="Quality" />
+                            </Rectangle.Effect>
+                        </Rectangle>
+                        <Rectangle Fill="{StaticResource Brush.Surface.ImageSearchFooter}" />
+                        <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                          VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- The mark of a site: a rounded tile with its first letter, in a color the name decides. -->
+    <Style x:Key="ImageSearch.Mark" TargetType="Border">
+        <Setter Property="Width" Value="16" />
+        <Setter Property="Height" Value="16" />
+        <Setter Property="CornerRadius" Value="4" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+
+    <!-- One result: the thumbnail, the title under it, and the site. -->
+    <DataTemplate DataType="{x:Type ims:ImageSearchCardViewModel}">
+        <Button x:Name="Card" Margin="{StaticResource ImageSearch.CardMargin}" Focusable="True" Cursor="Arrow"
+                Command="{Binding DataContext.OpenCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                CommandParameter="{Binding}" AutomationProperties.Name="{Binding AutomationName}">
+            <Button.Template>
+                <ControlTemplate TargetType="Button">
+                    <ContentPresenter />
+                </ControlTemplate>
+            </Button.Template>
+            <StackPanel>
+                <controls:AspectRatioTile x:Name="Tile" AspectRatio="{Binding AspectRatio}"
+                                          Background="{StaticResource Brush.Surface.ImageSearchThumbnail}"
+                                          controls:CornerClip.CornerSize="{StaticResource ImageSearch.ThumbnailCorner}">
+                    <Image Source="{Binding Thumbnail}" Stretch="UniformToFill" RenderOptions.BitmapScalingMode="HighQuality" />
+                </controls:AspectRatioTile>
+                <TextBlock Text="{Binding Title}" Margin="4,8.5,4,0" TextWrapping="Wrap" MaxHeight="44" TextTrimming="CharacterEllipsis"
+                           FontFamily="{StaticResource Font.Text}" FontSize="{StaticResource FontSize.ImageSearchCard}"
+                           FontWeight="SemiBold" Foreground="{StaticResource Brush.Text.ImageSearchTitle}" />
+                <StackPanel Orientation="Horizontal" Margin="4,5,4,0">
+                    <Border Style="{StaticResource ImageSearch.Mark}" Background="{Binding MarkBrush}" Margin="0,0,6,0">
+                        <TextBlock Text="{Binding MarkLetter}" FontSize="10" FontWeight="Bold" Foreground="White"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <TextBlock Text="{Binding SourceName}" MaxWidth="140" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"
+                               FontFamily="{StaticResource Font.Text}" FontSize="{StaticResource FontSize.ImageSearchCard}"
+                               Foreground="{StaticResource Brush.Text.ImageSearchSource}" />
+                </StackPanel>
+            </StackPanel>
+        </Button>
+        <DataTemplate.Triggers>
+            <DataTrigger Binding="{Binding CanOpen}" Value="True">
+                <Setter TargetName="Card" Property="Cursor" Value="Hand" />
+            </DataTrigger>
+        </DataTemplate.Triggers>
+    </DataTemplate>
+
+    <!-- "Report a Concern": the reference's blue link with a speech bubble that has an exclamation mark in it. -->
+    <Style x:Key="ImageSearch.Link" TargetType="Button">
+        <Setter Property="Foreground" Value="{StaticResource Brush.Text.LinkBlue}" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Focusable" Value="True" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <StackPanel x:Name="Row" Orientation="Horizontal" Background="Transparent">
+                        <Path Data="{StaticResource Icon.ReportConcern}" Style="{StaticResource IconGlyph}" StrokeThickness="1.1" Stretch="Uniform"
+                              Width="13.5" Height="12.5" Stroke="{TemplateBinding Foreground}" Margin="0,0,8.5,0" VerticalAlignment="Center" />
+                        <TextBlock Text="Report a Concern" FontFamily="{StaticResource Font.Text}"
+                                   FontSize="{StaticResource FontSize.ImageSearchLink}" Foreground="{TemplateBinding Foreground}"
+                                   VerticalAlignment="Center" />
+                    </StackPanel>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Row" Property="Opacity" Value="0.8" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter TargetName="Row" Property="Opacity" Value="0.4" />
+                            <Setter Property="Cursor" Value="Arrow" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- The two buttons of the question that asks whether a picture may be sent: a glass pill, and the same in the link's blue for the one
+         that sends. -->
+    <Style x:Key="ImageSearch.DialogButton" TargetType="Button">
+        <Setter Property="Foreground" Value="{StaticResource Brush.Text.Primary}" />
+        <Setter Property="Background" Value="{StaticResource Brush.Control.Glass}" />
+        <Setter Property="FontFamily" Value="{StaticResource Font.Text}" />
+        <Setter Property="FontSize" Value="{StaticResource FontSize.BodySmall}" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Grid>
+                        <Border x:Name="Pill" CornerRadius="16" Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}"
+                                BorderBrush="{StaticResource Brush.Stroke.ControlRim}" BorderThickness="1">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <Border x:Name="Focus" CornerRadius="16" BorderBrush="{StaticResource Brush.State.FocusRing}" BorderThickness="2"
+                                Margin="-2" Visibility="Collapsed" />
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Pill" Property="Opacity" Value="0.85" />
+                        </Trigger>
+                        <Trigger Property="IsKeyboardFocused" Value="True">
+                            <Setter TargetName="Focus" Property="Visibility" Value="Visible" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+    <Style x:Key="ImageSearch.DialogPrimary" TargetType="Button" BasedOn="{StaticResource ImageSearch.DialogButton}">
+        <Setter Property="Background" Value="{StaticResource Brush.Text.LinkBlue}" />
+        <Setter Property="Foreground" Value="White" />
+    </Style>
+
+</ResourceDictionary>

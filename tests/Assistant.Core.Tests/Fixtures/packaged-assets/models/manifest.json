@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "groups": [
+    {
+      "id": "chat-4b",
+      "files": [
+        {
+          "path": "mmproj.gguf",
+          "size": 11,
+          "sha256": "cf999d83dee93ecc1c57f38ee812d0a519b5fcdb1d0d5bb70e9da88f057c6ac8"
+        },
+        {
+          "path": "model.gguf",
+          "size": 16,
+          "sha256": "a03c1f6dfe267b02935668245c5c5c2a295aa3571f1436d8f3898c205b6d75a7"
+        }
+      ]
+    }
+  ]
+}

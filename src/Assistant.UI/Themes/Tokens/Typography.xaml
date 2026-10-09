@@ -1,0 +1,180 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+                    xmlns:po="http://schemas.microsoft.com/winfx/2006/xaml/presentation/options"
+                    xmlns:sys="clr-namespace:System;assembly=System.Runtime"
+                    mc:Ignorable="po">
+
+    <!-- Typefaces. Segoe UI Variable's display optical size is closest to the references' large type; plain
+         Segoe UI is the fallback. -->
+    <FontFamily x:Key="Font.Display">Segoe UI Variable Display, Segoe UI</FontFamily>
+    <FontFamily x:Key="Font.Text">Segoe UI Variable Text, Segoe UI</FontFamily>
+
+    <!-- Code is monospaced: Cascadia Mono where it is installed, such as with Windows Terminal, and otherwise Consolas,
+         which comes with Windows. -->
+    <FontFamily x:Key="Font.Code">Cascadia Mono, Consolas, Courier New</FontFamily>
+
+    <!-- Type ramp, in DIPs. Prompt is measured from the Search or Ask reference, Body (answers) and BodySmall (the
+         user's messages) from the floating conversation reference; Caption and the headings in answers are
+         provisional until a reference shows them. A level 3 heading, and any deeper one, is Body size. -->
+    <sys:Double x:Key="FontSize.Caption">12</sys:Double>
+    <sys:Double x:Key="FontSize.BodySmall">13.5</sys:Double>
+    <sys:Double x:Key="FontSize.Body">15</sys:Double>
+    <sys:Double x:Key="FontSize.Heading2">17</sys:Double>
+    <sys:Double x:Key="FontSize.Heading1">20</sys:Double>
+    <sys:Double x:Key="FontSize.Prompt">22</sys:Double>
+
+    <!-- A rich card's result, measured from the result card reference, whose caption is BodySmall. Code, and the type
+         label on a file's icon, are provisional until a reference shows them. -->
+    <sys:Double x:Key="FontSize.CardResult">26</sys:Double>
+    <sys:Double x:Key="FontSize.Code">13</sys:Double>
+    <sys:Double x:Key="FontSize.FileType">9</sys:Double>
+
+    <!-- The History window, measured from its reference: a conversation card's time, its title, large or, when that
+         does not fit in three lines, small, and its preview, each with its lines this far apart; and what the empty
+         workspace says. -->
+    <sys:Double x:Key="FontSize.HistoryTime">11</sys:Double>
+    <sys:Double x:Key="FontSize.HistoryTitle">18.25</sys:Double>
+    <sys:Double x:Key="LineHeight.HistoryTitle">17.5</sys:Double>
+    <sys:Double x:Key="FontSize.HistoryTitleSmall">14</sys:Double>
+    <sys:Double x:Key="LineHeight.HistoryTitleSmall">13.4</sys:Double>
+    <sys:Double x:Key="FontSize.HistoryPreview">12.25</sys:Double>
+    <sys:Double x:Key="LineHeight.HistoryPreview">11.5</sys:Double>
+    <sys:Double x:Key="FontSize.EmptyState">21</sys:Double>
+
+    <!-- The History window's list, measured from its reference: a row's title and the one or two lines of its preview,
+         each with its lines this far apart, and the header over each section of the list. -->
+    <sys:Double x:Key="FontSize.HistoryRowTitle">13</sys:Double>
+    <sys:Double x:Key="LineHeight.HistoryRowTitle">14.1</sys:Double>
+    <sys:Double x:Key="FontSize.HistoryRowPreview">12</sys:Double>
+    <sys:Double x:Key="LineHeight.HistoryRowPreview">16.4</sys:Double>
+    <sys:Double x:Key="FontSize.HistorySection">12.75</sys:Double>
+
+    <!-- The launcher's rows, measured from its reference: a command's title, and the key at its right, which is drawn
+         after the modifier's glyph (Controls/Launcher.xaml). The reference's hints add the same light to the glass
+         whatever its brightness, which no fixed layer of white can: 70 % white is the closest. -->
+    <sys:Double x:Key="FontSize.CommandItem">16.1</sys:Double>
+    <sys:Double x:Key="FontSize.CommandHint">17.5</sys:Double>
+    <SolidColorBrush x:Key="Brush.Text.CommandItem" Color="#FFFFFF" po:Freeze="True" />
+    <SolidColorBrush x:Key="Brush.Text.CommandHint" Color="#B3FFFFFF" po:Freeze="True" />
+
+    <!-- The search results' rows, sized from the Search reference by the width of their words in Segoe UI Variable: a
+         result's title alone on its row, and, with a second line, its smaller bold title over a lighter subtitle. A
+         Knowledge row, with its larger icon, sets both lines smaller and white. The note at the right of a title, the
+         words of the action a highlighted row offers and the key that does it are measured the same way. Semibold is
+         the reference's medium weight. -->
+    <sys:Double x:Key="FontSize.ResultTitle">17</sys:Double>
+    <sys:Double x:Key="FontSize.ResultTwoLineTitle">14.2</sys:Double>
+    <sys:Double x:Key="FontSize.ResultSubtitle">15</sys:Double>
+    <sys:Double x:Key="FontSize.ResultKnowledgeTitle">13.3</sys:Double>
+    <sys:Double x:Key="FontSize.ResultKnowledgeSubtitle">12.4</sys:Double>
+    <sys:Double x:Key="FontSize.ResultDetail">14.8</sys:Double>
+    <sys:Double x:Key="FontSize.ResultAction">10.2</sys:Double>
+    <sys:Double x:Key="FontSize.ResultKey">11.5</sys:Double>
+    <sys:Double x:Key="LineHeight.ResultLine">17.5</sys:Double>
+    <SolidColorBrush x:Key="Brush.Text.ResultPrimary" Color="#FFFFFF" po:Freeze="True" />
+    <SolidColorBrush x:Key="Brush.Text.ResultSecondary" Color="#B3FFFFFF" po:Freeze="True" />
+
+    <!-- The chips over the results, and what the field adds after the typed text (a lighter gray than the text itself, as in the reference). -->
+    <sys:Double x:Key="FontSize.ScopeChip">15.6</sys:Double>
+    <SolidColorBrush x:Key="Brush.Text.Completion" Color="#E6FFFFFF" po:Freeze="True" />
+
+    <!-- The Searching chip's word, sized from its reference by the width of "Searching" in Segoe UI Variable: white,
+         in the reference's medium weight (semibold here). -->
+    <sys:Double x:Key="FontSize.Activity">14.5</sys:Double>
+    <SolidColorBrush x:Key="Brush.Text.Activity" Color="#FFFFFF" po:Freeze="True" />
+
+    <!-- A menu's items, such as the History window's Grid and List, measured from the view menu reference. -->
+    <sys:Double x:Key="FontSize.Menu">13.5</sys:Double>
+
+    <!-- A card's time and preview are dimmer than its title, as are a list row's preview and a section's header; the
+         empty workspace's words barely show. -->
+    <SolidColorBrush x:Key="Brush.Text.HistoryCardSecondary" Color="#73FFFFFF" po:Freeze="True" />
+    <SolidColorBrush x:Key="Brush.Text.HistorySection" Color="#66FFFFFF" po:Freeze="True" />
+    <SolidColorBrush x:Key="Brush.Text.EmptyState" Color="#1EFFFFFF" po:Freeze="True" />
+
+    <!-- A menu's items and their glyphs are a slightly dimmed white, in the view menu reference. -->
+    <SolidColorBrush x:Key="Brush.Text.Menu" Color="#D9FFFFFF" po:Freeze="True" />
+
+    <!-- Text on dark glass: primary for text the user typed or reads, secondary for placeholders and glyphs. -->
+    <SolidColorBrush x:Key="Brush.Text.Primary" Color="#F5F5F5" po:Freeze="True" />
+    <SolidColorBrush x:Key="Brush.Text.Secondary" Color="#C6C6C6" po:Freeze="True" />
+
+    <!-- Messages in the floating conversation, the user's and the assistant's, are pure white in its reference. -->
+    <SolidColorBrush x:Key="Brush.Text.Message" Color="#FFFFFF" po:Freeze="True" />
+
+    <!-- A rich card's caption is dim and its result bright, in the result card reference. Code is a soft white. -->
+    <SolidColorBrush x:Key="Brush.Text.CardCaption" Color="#4D4D4D" po:Freeze="True" />
+    <SolidColorBrush x:Key="Brush.Text.CardResult" Color="#F2F2F2" po:Freeze="True" />
+    <SolidColorBrush x:Key="Brush.Text.CardSecondary" Color="#8C8C8C" po:Freeze="True" />
+    <SolidColorBrush x:Key="Brush.Text.Code" Color="#E6E6E6" po:Freeze="True" />
+
+    <!-- The glyph of a warning in an answer (context that did not fit): a soft amber that reads on the dark glass. The
+         warning's words stay secondary text, so only the glyph is colored. -->
+    <SolidColorBrush x:Key="Brush.Glyph.Warning" Color="#E8B75A" po:Freeze="True" />
+
+    <!-- A link in an answer's prose: a soft blue that reads on the dark glass. Provisional until a reference shows one. -->
+    <SolidColorBrush x:Key="Brush.Text.Link" Color="#8AB4F8" po:Freeze="True" />
+
+    <!-- Glyphs on glass buttons, which are drawn pure white in the floating conversation reference. -->
+    <SolidColorBrush x:Key="Brush.Glyph.OnGlass" Color="#FFFFFF" po:Freeze="True" />
+
+    <!-- Text styles. They target FrameworkElement so that a TextBox and a TextBlock can share one. -->
+    <Style x:Key="Text.Prompt" TargetType="FrameworkElement">
+        <Setter Property="TextElement.FontFamily" Value="{StaticResource Font.Display}" />
+        <Setter Property="TextElement.FontSize" Value="{StaticResource FontSize.Prompt}" />
+    </Style>
+
+    <Style x:Key="Text.Body" TargetType="FrameworkElement">
+        <Setter Property="TextElement.FontFamily" Value="{StaticResource Font.Text}" />
+        <Setter Property="TextElement.FontSize" Value="{StaticResource FontSize.Body}" />
+        <Setter Property="TextElement.Foreground" Value="{StaticResource Brush.Text.Primary}" />
+    </Style>
+
+    <Style x:Key="Text.BodySmall" TargetType="FrameworkElement" BasedOn="{StaticResource Text.Body}">
+        <Setter Property="TextElement.FontSize" Value="{StaticResource FontSize.BodySmall}" />
+    </Style>
+
+    <Style x:Key="Text.Caption" TargetType="FrameworkElement" BasedOn="{StaticResource Text.Body}">
+        <Setter Property="TextElement.FontSize" Value="{StaticResource FontSize.Caption}" />
+        <Setter Property="TextElement.Foreground" Value="{StaticResource Brush.Text.Secondary}" />
+    </Style>
+
+    <!-- Messages: the assistant's text is Body, the user's is BodySmall, and headings in answers are semibold. -->
+    <Style x:Key="Text.Message" TargetType="FrameworkElement" BasedOn="{StaticResource Text.Body}">
+        <Setter Property="TextElement.Foreground" Value="{StaticResource Brush.Text.Message}" />
+    </Style>
+
+    <Style x:Key="Text.MessageSmall" TargetType="FrameworkElement" BasedOn="{StaticResource Text.Message}">
+        <Setter Property="TextElement.FontSize" Value="{StaticResource FontSize.BodySmall}" />
+    </Style>
+
+    <Style x:Key="Text.Heading" TargetType="FrameworkElement" BasedOn="{StaticResource Text.Message}">
+        <Setter Property="TextElement.FontWeight" Value="SemiBold" />
+    </Style>
+
+    <!-- A rich card: a dim caption over a large result, and an optional line under it. -->
+    <Style x:Key="Text.CardCaption" TargetType="FrameworkElement" BasedOn="{StaticResource Text.BodySmall}">
+        <Setter Property="TextElement.Foreground" Value="{StaticResource Brush.Text.CardCaption}" />
+    </Style>
+
+    <Style x:Key="Text.CardResult" TargetType="FrameworkElement">
+        <Setter Property="TextElement.FontFamily" Value="{StaticResource Font.Display}" />
+        <Setter Property="TextElement.FontSize" Value="{StaticResource FontSize.CardResult}" />
+        <Setter Property="TextElement.Foreground" Value="{StaticResource Brush.Text.CardResult}" />
+    </Style>
+
+    <Style x:Key="Text.CardSecondary" TargetType="FrameworkElement" BasedOn="{StaticResource Text.BodySmall}">
+        <Setter Property="TextElement.Foreground" Value="{StaticResource Brush.Text.CardSecondary}" />
+    </Style>
+
+    <!-- Code, monospaced, with its lines 1.5 times the type size apart. -->
+    <Style x:Key="Text.Code" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{StaticResource Font.Code}" />
+        <Setter Property="FontSize" Value="{StaticResource FontSize.Code}" />
+        <Setter Property="Foreground" Value="{StaticResource Brush.Text.Code}" />
+        <Setter Property="LineHeight" Value="19.5" />
+        <Setter Property="LineStackingStrategy" Value="BlockLineHeight" />
+    </Style>
+
+</ResourceDictionary>

@@ -1,0 +1,16 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:orb="clr-namespace:Assistant.UI.Orb">
+
+    <!-- The assistant orb's bright boundary (Controls/AssistantOrb). At rest it is measured from the orb reference (a 2x
+         image, the orb 206 px across, so a radius is 103 px): a smile 0.05 radii below the orb's center at its flanks
+         and 0.265 at its middle, half as deep 0.5 to either side, with a band of light 0.16 thick. Sound lifts the boundary
+         by up to 0.3 radii and sets ripples of up to 0.10 running along it; a sound starting throws up a swell of up to
+         0.15. All lengths are in radii, so the orb looks the same at any size. -->
+    <orb:OrbShape x:Key="Orb.Assistant"
+                  RestFloor="0.05" DipDepth="0.215" DipCenter="0" DipWidth="0.43" EdgeDrop="0.05" CoreThickness="0.16"
+                  Lift="0.30" Ripple="0.10" Swell="0.15" Sway="0.30" Bloom="0.9" Quickening="1.4"
+                  Gate="0.015" Compression="0.7" AttackMs="55" ReleaseMs="320"
+                  ThinkingWave="0.03" ThinkingPeriod="2.4" ErrorSag="0.05" ErrorTint="0.62" Breath="0.006" />
+
+</ResourceDictionary>

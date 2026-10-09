@@ -1,0 +1,81 @@
+name: Build installer
+
+# Every push builds the installer and puts it on a draft release for the version in version.txt (tag v<version>), made the first time
+# and brought up to date by every later push. Publishing that draft on GitHub is what releases it: the app's update check only ever sees
+# published releases. Once a version is published, pushes leave it alone until version.txt is raised.
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: installer-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  installer:
+    runs-on: windows-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Install Inno Setup
+        shell: pwsh
+        run: choco install innosetup --yes --no-progress
+
+      - name: Read the version
+        id: version
+        shell: pwsh
+        run: |
+          $version = (Get-Content -LiteralPath version.txt -Raw).Trim()
+          if ($version -notmatch '^\d+\.\d+\.\d+$') { throw "version.txt must hold a version like 1.2.3, not '$version'." }
+          "version=$version" >> $env:GITHUB_OUTPUT
+
+      - name: Build the installer
+        shell: pwsh
+        run: .\packaging\Build-Installer.ps1 -Version '${{ steps.version.outputs.version }}' -OutputDirectory artifacts\installer
+
+      - name: Keep the installer with this run
+        uses: actions/upload-artifact@v4
+        with:
+          name: Assistant-${{ steps.version.outputs.version }}-win-x64-Setup
+          path: artifacts/installer/*-Setup.exe
+          if-no-files-found: error
+
+      - name: Put it on the draft release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          $tag = "v$env:VERSION"
+          $setup = Join-Path 'artifacts\installer' "Assistant-$env:VERSION-win-x64-Setup.exe"
+          if (-not (Test-Path -LiteralPath $setup)) { throw "$setup was not built." }
+
+          $releases = gh release list --limit 200 --json tagName,isDraft | ConvertFrom-Json
+          if ($LASTEXITCODE -ne 0) { throw 'The releases could not be listed.' }
+          $existing = $releases | Where-Object { $_.tagName -eq $tag } | Select-Object -First 1
+
+          if ($existing -and -not $existing.isDraft) {
+            Write-Host "::notice::$tag is already published, so it is left as it is. Raise version.txt for the next release."
+          }
+          elseif ($existing) {
+            gh release upload $tag $setup --clobber
+            if ($LASTEXITCODE -ne 0) { throw "The installer could not be added to the draft $tag." }
+            gh release edit $tag --target $env:GITHUB_SHA
+            if ($LASTEXITCODE -ne 0) { throw "The draft $tag could not be moved to this commit." }
+            Write-Host "::notice::The draft $tag now has the installer built from $env:GITHUB_SHA."
+          }
+          else {
+            gh release create $tag $setup --draft --target $env:GITHUB_SHA --title "Kiri $env:VERSION" --generate-notes
+            if ($LASTEXITCODE -ne 0) { throw "The draft $tag could not be made." }
+            Write-Host "::notice::Made the draft release $tag with the installer."
+          }

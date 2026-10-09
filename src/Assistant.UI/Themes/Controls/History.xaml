@@ -1,0 +1,581 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sys="clr-namespace:System;assembly=System.Runtime"
+                    xmlns:controls="clr-namespace:Assistant.UI.Controls"
+                    xmlns:vm="clr-namespace:Assistant.UI.ViewModels"
+                    xmlns:windowing="clr-namespace:Assistant.UI.Windowing">
+
+    <!-- The tokens, glyphs and button styles these styles use. StaticResource cannot see sibling dictionaries in
+         Theme.xaml, so each control dictionary merges the dictionaries it needs. -->
+    <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="../Tokens/Typography.xaml" />
+        <ResourceDictionary Source="../Tokens/Surfaces.xaml" />
+        <ResourceDictionary Source="../Tokens/Strokes.xaml" />
+        <ResourceDictionary Source="../Tokens/States.xaml" />
+        <ResourceDictionary Source="../Tokens/Radii.xaml" />
+        <ResourceDictionary Source="../Icons.xaml" />
+        <ResourceDictionary Source="IconButton.xaml" />
+        <ResourceDictionary Source="PromptInput.xaml" />
+        <ResourceDictionary Source="Menu.xaml" />
+    </ResourceDictionary.MergedDictionaries>
+
+    <!-- The History window, measured from its reference (Views/HistoryWindow), in DIPs: a 320-wide sidebar of
+         conversation cards on the left and the workspace on the right, under a 48-tall band that moves the window. Its
+         glass buttons are 6.25 from the window's top and about as far from the sidebar's edges and the window's right.
+         The cards lie in two columns 15.4 apart and 15.4 from the sidebar's sides, the first 49.8 below the window's top
+         and the right column 49.5 lower than the left; each is 184 tall and 14.5 above the next. -->
+    <GridLength x:Key="History.SidebarWidth">320</GridLength>
+    <sys:Double x:Key="History.CaptionHeight">48</sys:Double>
+    <Thickness x:Key="History.FilterButtonMargin">0,6.25,7.25,0</Thickness>
+    <Thickness x:Key="History.ComposeButtonMargin">6.25,6.25,0,0</Thickness>
+    <Thickness x:Key="History.SearchButtonMargin">0,6.25,7,0</Thickness>
+
+    <!-- The search field, into which the search button opens (there is no reference for it: it is made of the window's own
+         glass and glyphs). It is a pill of the same glass as the buttons, as tall as they are and 264 wide, and takes the
+         button's place at the workspace's top right. Its magnifying glass is 13 from its left, the words begin 36 in, and
+         the button that clears the search is 5 from its right end. The sidebar says "No Results" 96 under the window's top. -->
+    <sys:Double x:Key="History.SearchFieldWidth">264</sys:Double>
+    <sys:Double x:Key="History.SearchFieldCorner">18</sys:Double>
+    <Thickness x:Key="History.SearchGlyphMargin">13,0,0,1</Thickness>
+    <Thickness x:Key="History.SearchInputPadding">36,0,34,1</Thickness>
+    <sys:Double x:Key="History.SearchClearSize">26</sys:Double>
+    <Thickness x:Key="History.SearchClearMargin">0,0,5,0</Thickness>
+    <Thickness x:Key="History.NoResultsMargin">0,96,0,0</Thickness>
+    <Thickness x:Key="History.ListPadding">15.4,49.8,15.4,24</Thickness>
+    <sys:Double x:Key="History.ColumnSpacing">15.4</sys:Double>
+    <sys:Double x:Key="History.RowSpacing">14.5</sys:Double>
+    <sys:Double x:Key="History.Stagger">49.5</sys:Double>
+    <sys:Double x:Key="History.CardHeight">184</sys:Double>
+
+    <!-- Inside a card, text is 18 from its sides. The time's capitals are 26 below the card's top and the title's 42;
+         the preview begins about 8 under the title's last baseline and stops at the last whole line whose baseline is
+         at least 21 above the card's bottom. Under a title too long for its large type, the preview has as few lines as
+         under three lines of the large type, as in the reference. -->
+    <Thickness x:Key="History.CardPadding">18.1,21.7,18.1,19</Thickness>
+    <Thickness x:Key="History.CardTitleMargin">0,5,0,0</Thickness>
+    <Thickness x:Key="History.CardPreviewMargin">0,4.3,0,0</Thickness>
+    <Thickness x:Key="History.CardPreviewMarginUnderSmallTitle">0,4.3,0,12.3</Thickness>
+
+    <!-- A conversation with an attached image shows the newest one under the title instead of the preview, set into the
+         card as the reference's liquid glass holds it (Controls/CardThumbnail): the thumbnail spans the card's width
+         from 5.4 under the title down to its bottom. The image shows in a column 18.6 from the card's sides whose top
+         corners reach 32; the glass beside it ends 12.5 above the card's bottom in rounded tips that reach 5.8 past the
+         column and begin to curve 7.2 above that, so the image flows around them out to the card's rounded bottom. -->
+    <Thickness x:Key="History.CardThumbnailMargin">-18.1,5.4,-18.1,-19</Thickness>
+    <sys:Double x:Key="History.CardThumbnailInset">18.6</sys:Double>
+    <sys:Double x:Key="History.CardThumbnailTipWidth">5.8</sys:Double>
+    <sys:Double x:Key="History.CardThumbnailTipHeight">7.2</sys:Double>
+    <sys:Double x:Key="History.CardThumbnailTipLift">12.5</sys:Double>
+
+    <!-- The open card's blue ring and the keyboard's ring are centered on the card's outline, half outside it. -->
+    <Thickness x:Key="History.CardRingMargin">-1.25</Thickness>
+
+    <!-- The sidebar's cards pass under its buttons and fade into the glass on the way; so do the list's rows. -->
+    <PointCollection x:Key="History.ListTopFade">10,0 30,0.4 50,1</PointCollection>
+
+    <!-- The list, measured from its reference: rows 76.2 tall, 9.6 in from the sidebar's sides and touching one
+         another, in sections under headers 32.9 tall, the first header 37.05 below the window's top. A header's words
+         begin 12.9 from the sidebar's left, their baseline 24.8 below the header's top. -->
+    <Thickness x:Key="History.RowsPadding">9.6,37.05,9.6,24</Thickness>
+    <sys:Double x:Key="History.RowHeight">76.2</sys:Double>
+    <sys:Double x:Key="History.SectionHeaderHeight">32.9</sys:Double>
+    <Thickness x:Key="History.SectionHeaderMargin">3.3,11.04,0,0</Thickness>
+
+    <!-- Inside a row, text begins 7.25 from its left, and a thumbnail 45.5 across ends 7.5 from its right. The title
+         and up to two lines of preview are centered in the row as one block, which puts a title with one line of preview
+         on a baseline 33.07 below the row's top and the preview's 18.4 lower; a title alone, beside its thumbnail, is
+         centered on it. -->
+    <Thickness x:Key="History.RowPadding">7.25,0,7.5,0</Thickness>
+    <Thickness x:Key="History.RowPreviewMargin">0,2.45,0,0</Thickness>
+    <sys:Double x:Key="History.RowPreviewMaxHeight">32.9</sys:Double>
+    <sys:Double x:Key="History.RowThumbnailSize">45.5</sys:Double>
+    <Thickness x:Key="History.RowThumbnailMargin">12,0,0,0</Thickness>
+
+    <!-- The view menu hangs 6.75 below the filter button, its glass's left edge 5.25 left of the button's, reaching
+         into the workspace (Controls/Menu.xaml's ShadowRoom is included). -->
+    <sys:Double x:Key="History.ViewMenuOffsetX">-33.25</sys:Double>
+    <sys:Double x:Key="History.ViewMenuOffsetY">16.75</sys:Double>
+
+    <!-- The empty workspace's words are centered in it below a 43 band. -->
+    <Thickness x:Key="History.EmptyStateMargin">0,43,0,0</Thickness>
+
+    <!-- The open conversation lies on the workspace the way the floating conversation lies on its glass, through the same
+         ConversationView, in a column centered in the workspace (Views/ConversationView), measured from the full
+         conversation reference: the column's cards and galleries are 605.4 wide with the text 17 in from their sides
+         (Message.CardBleed, set for the workspace in the window along with its card's spacing and padding: its cards are
+         18.1 from prose and 101.8 tall), the first line's baseline is 50.96 below the window's top,
+         and the last message ends 96.5 above its bottom, clear of the input bar, which the messages pass under. They fade
+         out under the compose and search buttons at the top and under the input bar at the bottom. -->
+    <sys:Double x:Key="History.TranscriptWidth">605.4</sys:Double>
+    <Thickness x:Key="History.TranscriptPadding">17,34.8,17,56.5</Thickness>
+    <Thickness x:Key="History.TranscriptCardBleed">-17,0,-17,0</Thickness>
+    <sys:Double x:Key="History.TranscriptCardSpacing">18.1</sys:Double>
+    <Thickness x:Key="History.TranscriptCardPadding">18,24.3,18,27.5</Thickness>
+    <PointCollection x:Key="History.TranscriptTopFade">6,0 20,0.45 38,1</PointCollection>
+    <PointCollection x:Key="History.TranscriptBottomFade">10,0 26,0.4 46,1</PointCollection>
+
+    <!-- The input bar along the workspace's bottom: a 31.8-tall pill of glass between two glass discs 30.7 across, 11.4 from
+         it, all centered 26 above the window's bottom, the discs 14.85 and 15.3 in from the workspace's sides. The pill's
+         words begin 13.5 in from its left. -->
+    <Thickness x:Key="History.ComposerMargin">14.85,0,15.3,10.1</Thickness>
+    <sys:Double x:Key="History.ComposerButtonSize">30.7</sys:Double>
+    <Thickness x:Key="History.ComposerAttachMargin">0,0,11.4,0.55</Thickness>
+    <Thickness x:Key="History.ComposerVoiceMargin">11.4,0,0,0.55</Thickness>
+    <sys:Double x:Key="History.ComposerHeight">31.8</sys:Double>
+    <sys:Double x:Key="History.ComposerCorner">19</sys:Double>
+    <Thickness x:Key="History.ComposerPadding">11.5,6.9,8,6.9</Thickness>
+
+    <!-- The window's own close, minimize and maximize buttons: 13.5 circles 21.75 apart, centered 24.25 from the
+         window's top and 24.5 from its left. -->
+    <sys:Double x:Key="History.WindowButtonSize">13.5</sys:Double>
+    <Thickness x:Key="History.WindowButtonsMargin">17.75,17.5,0,0</Thickness>
+    <Thickness x:Key="History.WindowButtonSpacing">0,0,8.25,0</Thickness>
+
+    <!-- The sidebar: the backdrop showing through, lightened, or opaque without one (PROJECT_SPEC §4.0). -->
+    <Style x:Key="HistorySidebar" TargetType="Grid">
+        <Setter Property="Background" Value="{StaticResource Brush.Surface.SidebarOpaque}" />
+        <Style.Triggers>
+            <Trigger Property="windowing:Backdrop.IsBlurred" Value="True">
+                <Setter Property="Background" Value="{StaticResource Brush.Surface.Sidebar}" />
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+
+    <!-- The workspace: the backdrop darkened almost to the reference's color, or that color without a backdrop. -->
+    <Style x:Key="HistoryWorkspace" TargetType="Grid">
+        <Setter Property="Background" Value="{StaticResource Brush.Surface.WorkspaceOpaque}" />
+        <Style.Triggers>
+            <Trigger Property="windowing:Backdrop.IsBlurred" Value="True">
+                <Setter Property="Background" Value="{StaticResource Brush.Surface.Workspace}" />
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+
+    <!-- Glyphs for the History window's glass buttons (Icons.xaml), stroked with the button's foreground. -->
+    <DataTemplate x:Key="Glyph.Filter">
+        <Path Style="{StaticResource IconGlyph}" StrokeThickness="1.6" Data="{StaticResource Icon.Filter}" />
+    </DataTemplate>
+
+    <DataTemplate x:Key="Glyph.Compose">
+        <Path Style="{StaticResource IconGlyph}" StrokeThickness="1.6" Data="{StaticResource Icon.Compose}"
+              Margin="1,0,0,1" />
+    </DataTemplate>
+
+    <DataTemplate x:Key="Glyph.Search">
+        <Path Style="{StaticResource IconGlyph}" StrokeThickness="1.8" Data="{StaticResource Icon.Search}" />
+    </DataTemplate>
+
+    <DataTemplate x:Key="Glyph.Plus">
+        <Path Style="{StaticResource IconGlyph}" StrokeThickness="1.6" Data="{StaticResource Icon.Plus}" />
+    </DataTemplate>
+
+    <!-- The input bar's editor: the shared prompt input at the user's message size on the pill's glass, one line tall until it wraps,
+         without a microphone of its own, since the bar has its own beside it. -->
+    <Style x:Key="HistoryComposerInput" TargetType="controls:PromptInputControl"
+           BasedOn="{StaticResource PromptInput.Expanded}">
+        <Setter Property="FontSize" Value="{StaticResource FontSize.BodySmall}" />
+        <Setter Property="Padding" Value="{StaticResource History.ComposerPadding}" />
+        <Setter Property="MinHeight" Value="{StaticResource History.ComposerHeight}" />
+        <Setter Property="ShowMicrophone" Value="False" />
+    </Style>
+
+    <!-- The search field's editor: the shared prompt input at the size of the buttons it sits between, one line, with room
+         on its left for the magnifying glass and on its right for the button that clears the search. -->
+    <Style x:Key="HistorySearchInput" TargetType="controls:PromptInputControl"
+           BasedOn="{StaticResource {x:Type controls:PromptInputControl}}">
+        <Setter Property="FontFamily" Value="{StaticResource Font.Text}" />
+        <Setter Property="FontSize" Value="{StaticResource FontSize.BodySmall}" />
+        <Setter Property="Padding" Value="{StaticResource History.SearchInputPadding}" />
+        <Setter Property="MinHeight" Value="{StaticResource Size.GlassButton}" />
+        <Setter Property="ShowMicrophone" Value="False" />
+    </Style>
+
+    <!-- What the sidebar says when a search finds no conversation. -->
+    <Style x:Key="Text.NoResults" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{StaticResource Font.Text}" />
+        <Setter Property="FontSize" Value="{StaticResource FontSize.Body}" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Foreground" Value="{StaticResource Brush.Text.HistorySection}" />
+        <Setter Property="HorizontalAlignment" Value="Center" />
+        <Setter Property="VerticalAlignment" Value="Top" />
+        <Setter Property="Margin" Value="{StaticResource History.NoResultsMargin}" />
+        <Setter Property="IsHitTestVisible" Value="False" />
+        <Setter Property="Visibility" Value="Collapsed" />
+        <Style.Triggers>
+            <DataTrigger Binding="{Binding HasNoResults}" Value="True">
+                <Setter Property="Visibility" Value="Visible" />
+            </DataTrigger>
+        </Style.Triggers>
+    </Style>
+
+    <!-- One of the window's own buttons: a colored circle, gray while the window is inactive unless the pointer is
+         over the buttons, when every one of them shows its dark glyph; a button that cannot be used stays gray and shows
+         no glyph. Windows' own shortcuts do the same by keyboard, so the buttons are not tab stops. Set Background to
+         the button's color and Tag to its glyph. -->
+    <Style x:Key="WindowButton" TargetType="Button">
+        <Setter Property="Width" Value="{StaticResource History.WindowButtonSize}" />
+        <Setter Property="Height" Value="{StaticResource History.WindowButtonSize}" />
+        <Setter Property="Margin" Value="{StaticResource History.WindowButtonSpacing}" />
+        <Setter Property="Focusable" Value="False" />
+        <Setter Property="IsTabStop" Value="False" />
+        <Setter Property="WindowChrome.IsHitTestVisibleInChrome" Value="True" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Grid>
+                        <Ellipse x:Name="Disc" Fill="{TemplateBinding Background}" />
+                        <Ellipse x:Name="StateLayer" Fill="Transparent" />
+                        <Path x:Name="Glyph" Data="{Binding Tag, RelativeSource={RelativeSource TemplatedParent}}"
+                              Stroke="{StaticResource Brush.WindowButton.Glyph}" StrokeThickness="1.2"
+                              StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                              HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="Hidden" />
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <DataTrigger Binding="{Binding IsActive, RelativeSource={RelativeSource AncestorType=Window}}" Value="False">
+                            <Setter TargetName="Disc" Property="Fill" Value="{StaticResource Brush.WindowButton.Inactive}" />
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType=Panel}}" Value="True">
+                            <Setter TargetName="Disc" Property="Fill" Value="{Binding Background, RelativeSource={RelativeSource TemplatedParent}}" />
+                            <Setter TargetName="Glyph" Property="Visibility" Value="Visible" />
+                        </DataTrigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="StateLayer" Property="Fill" Value="{StaticResource Brush.State.Pressed}" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter TargetName="Disc" Property="Fill" Value="{StaticResource Brush.WindowButton.Inactive}" />
+                            <Setter TargetName="Glyph" Property="Visibility" Value="Hidden" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- A conversation's card: a lighter layer of glass with the smooth corners of the reference and one faint rim;
+         lighter when hovered, and lighter still when it is the one open, which is ringed in blue around its outline, one
+         clean line with nothing inside it. The keyboard rings a card it reaches without opening it in the same place,
+         so a card never has two outlines. Its content is cut off by its corners. -->
+    <Style x:Key="HistoryCardContainer" TargetType="ListBoxItem">
+        <Setter Property="Height" Value="{StaticResource History.CardHeight}" />
+        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+        <Setter Property="VerticalContentAlignment" Value="Stretch" />
+        <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+        <Setter Property="AutomationProperties.Name" Value="{Binding Title}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ListBoxItem">
+                    <Grid>
+                        <controls:PanelShape x:Name="Surface" Fill="{StaticResource Brush.Surface.HistoryCard}"
+                                             Stroke="{StaticResource Brush.Stroke.HistoryCardRim}"
+                                             StrokeThickness="{StaticResource StrokeThickness.Hairline}"
+                                             CornerSize="{StaticResource Radius.HistoryCard}" />
+                        <controls:PanelShape x:Name="StateLayer" CornerSize="{StaticResource Radius.HistoryCard}" />
+                        <ContentPresenter controls:CornerClip.CornerSize="{StaticResource Radius.HistoryCard}" />
+                        <controls:PanelShape x:Name="SelectedOutline" Visibility="Collapsed"
+                                             Margin="{StaticResource History.CardRingMargin}"
+                                             Stroke="{StaticResource Brush.Stroke.HistoryCardSelected}"
+                                             StrokeThickness="{StaticResource StrokeThickness.HistoryCardSelected}"
+                                             CornerSize="{StaticResource Radius.HistoryCard}" />
+                        <controls:PanelShape x:Name="FocusRing" Visibility="Collapsed"
+                                             Margin="{StaticResource History.CardRingMargin}"
+                                             Stroke="{StaticResource Brush.State.FocusRing}"
+                                             StrokeThickness="{StaticResource StrokeThickness.HistoryCardSelected}"
+                                             CornerSize="{StaticResource Radius.HistoryCard}" />
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="StateLayer" Property="Fill" Value="{StaticResource Brush.Surface.HistoryCardHover}" />
+                        </Trigger>
+                        <Trigger Property="IsSelected" Value="True">
+                            <Setter TargetName="StateLayer" Property="Fill" Value="{StaticResource Brush.Surface.HistoryCardSelected}" />
+                            <Setter TargetName="SelectedOutline" Property="Visibility" Value="Visible" />
+                        </Trigger>
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="IsKeyboardFocused" Value="True" />
+                                <Condition Property="IsSelected" Value="False" />
+                            </MultiTrigger.Conditions>
+                            <Setter TargetName="FocusRing" Property="Visibility" Value="Visible" />
+                        </MultiTrigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- The list of conversations: the cards, two columns of them, scrolling without a visible scroll bar and fading
+         under the sidebar's buttons. Only the cards in view are created, and scrolled-away ones are reused, so a long
+         history scrolls as smoothly as a short one. -->
+    <Style x:Key="HistoryConversationList" TargetType="ListBox">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+        <Setter Property="KeyboardNavigation.DirectionalNavigation" Value="Contained" />
+        <Setter Property="ScrollViewer.CanContentScroll" Value="True" />
+        <Setter Property="VirtualizingPanel.IsVirtualizing" Value="True" />
+        <Setter Property="VirtualizingPanel.VirtualizationMode" Value="Recycling" />
+        <Setter Property="ItemsPanel">
+            <Setter.Value>
+                <ItemsPanelTemplate>
+                    <controls:VirtualizingStaggeredColumnsPanel Columns="2"
+                                                                ColumnSpacing="{StaticResource History.ColumnSpacing}"
+                                                                RowSpacing="{StaticResource History.RowSpacing}"
+                                                                Stagger="{StaticResource History.Stagger}"
+                                                                ItemHeight="{StaticResource History.CardHeight}"
+                                                                Padding="{StaticResource History.ListPadding}" />
+                </ItemsPanelTemplate>
+            </Setter.Value>
+        </Setter>
+        <Setter Property="ItemContainerStyle" Value="{StaticResource HistoryCardContainer}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ListBox">
+                    <controls:FadingScrollViewer x:Name="ScrollViewer" Background="Transparent" Focusable="False"
+                                                 VerticalScrollBarVisibility="Hidden"
+                                                 HorizontalScrollBarVisibility="Disabled" CanContentScroll="True"
+                                                 TopFade="{StaticResource History.ListTopFade}">
+                        <ItemsPresenter />
+                    </controls:FadingScrollViewer>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- What a card shows: when the conversation last changed, its title, large or small to fit, and as much of the
+         latest answer as fits in whole lines, or the image most recently attached to the conversation. -->
+    <Style x:Key="Text.HistoryTime" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{StaticResource Font.Text}" />
+        <Setter Property="FontSize" Value="{StaticResource FontSize.HistoryTime}" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Foreground" Value="{StaticResource Brush.Text.HistoryCardSecondary}" />
+        <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+    </Style>
+
+    <Style x:Key="Text.HistoryPreview" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{StaticResource Font.Text}" />
+        <Setter Property="FontSize" Value="{StaticResource FontSize.HistoryPreview}" />
+        <Setter Property="LineHeight" Value="{StaticResource LineHeight.HistoryPreview}" />
+        <Setter Property="LineStackingStrategy" Value="BlockLineHeight" />
+        <Setter Property="Foreground" Value="{StaticResource Brush.Text.HistoryCardSecondary}" />
+        <Setter Property="TextWrapping" Value="Wrap" />
+        <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+    </Style>
+
+    <DataTemplate DataType="{x:Type vm:HistoryConversationViewModel}">
+        <Grid Margin="{StaticResource History.CardPadding}">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+            <TextBlock x:Name="Time" Style="{StaticResource Text.HistoryTime}" Text="{Binding TimeLabel}" />
+            <controls:FittedTitle x:Name="Title" Grid.Row="1" Margin="{StaticResource History.CardTitleMargin}"
+                                  Text="{Binding Title}" MaxLines="3"
+                                  TextElement.FontFamily="{StaticResource Font.Display}" TextElement.FontWeight="Bold"
+                                  TextElement.Foreground="{StaticResource Brush.Text.Message}"
+                                  LargeFontSize="{StaticResource FontSize.HistoryTitle}"
+                                  LargeLineHeight="{StaticResource LineHeight.HistoryTitle}"
+                                  SmallFontSize="{StaticResource FontSize.HistoryTitleSmall}"
+                                  SmallLineHeight="{StaticResource LineHeight.HistoryTitleSmall}" />
+            <TextBlock x:Name="Preview" Grid.Row="2" Margin="{StaticResource History.CardPreviewMargin}"
+                       Style="{StaticResource Text.HistoryPreview}" controls:SearchHighlight.Text="{Binding Preview}"
+                       controls:SearchHighlight.Matches="{Binding PreviewMatches}" VerticalAlignment="Top"
+                       Visibility="Collapsed" />
+            <controls:CardThumbnail x:Name="Thumbnail" Grid.Row="2" Margin="{StaticResource History.CardThumbnailMargin}"
+                                    Source="{Binding Image.Thumbnail}"
+                                    CornerSize="{StaticResource Radius.HistoryCard}"
+                                    Inset="{StaticResource History.CardThumbnailInset}"
+                                    TopCornerSize="{StaticResource Radius.HistoryThumbnail}"
+                                    TipWidth="{StaticResource History.CardThumbnailTipWidth}"
+                                    TipHeight="{StaticResource History.CardThumbnailTipHeight}"
+                                    TipLift="{StaticResource History.CardThumbnailTipLift}"
+                                    AutomationProperties.Name="{Binding Image.Name}" />
+        </Grid>
+        <DataTemplate.Triggers>
+            <DataTrigger Binding="{Binding Image}" Value="{x:Null}">
+                <Setter TargetName="Preview" Property="Visibility" Value="Visible" />
+                <Setter TargetName="Thumbnail" Property="Visibility" Value="Collapsed" />
+            </DataTrigger>
+            <DataTrigger Binding="{Binding IsReduced, ElementName=Title}" Value="True">
+                <Setter TargetName="Preview" Property="Margin" Value="{StaticResource History.CardPreviewMarginUnderSmallTitle}" />
+            </DataTrigger>
+        </DataTemplate.Triggers>
+    </DataTemplate>
+
+    <!-- The list: compact rows grouped by recency (PROJECT_SPEC §4.3), measured from the list reference. -->
+
+    <!-- The header over a section of the list, such as Today or Previous 7 Days. -->
+    <Style x:Key="Text.HistorySection" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{StaticResource Font.Text}" />
+        <Setter Property="FontSize" Value="{StaticResource FontSize.HistorySection}" />
+        <Setter Property="FontWeight" Value="Bold" />
+        <Setter Property="Foreground" Value="{StaticResource Brush.Text.HistorySection}" />
+        <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+    </Style>
+
+    <!-- A row's title, on one line, and its preview, on up to two, cut short where it does not fit. The title is
+         semibold, which carries as much ink as the reference's bold. -->
+    <Style x:Key="Text.HistoryRowTitle" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{StaticResource Font.Text}" />
+        <Setter Property="FontSize" Value="{StaticResource FontSize.HistoryRowTitle}" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="LineHeight" Value="{StaticResource LineHeight.HistoryRowTitle}" />
+        <Setter Property="LineStackingStrategy" Value="BlockLineHeight" />
+        <Setter Property="Foreground" Value="{StaticResource Brush.Text.Message}" />
+        <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+    </Style>
+
+    <Style x:Key="Text.HistoryRowPreview" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{StaticResource Font.Text}" />
+        <Setter Property="FontSize" Value="{StaticResource FontSize.HistoryRowPreview}" />
+        <Setter Property="LineHeight" Value="{StaticResource LineHeight.HistoryRowPreview}" />
+        <Setter Property="LineStackingStrategy" Value="BlockLineHeight" />
+        <Setter Property="MaxHeight" Value="{StaticResource History.RowPreviewMaxHeight}" />
+        <Setter Property="Foreground" Value="{StaticResource Brush.Text.HistoryCardSecondary}" />
+        <Setter Property="TextWrapping" Value="Wrap" />
+        <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+    </Style>
+
+    <!-- A section of the list: its header over its rows. The header is the part the list measures to scroll through
+         sections it has not created. -->
+    <Style x:Key="HistorySectionContainer" TargetType="GroupItem">
+        <Setter Property="Focusable" Value="False" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="GroupItem">
+                    <StackPanel>
+                        <ContentPresenter x:Name="PART_Header" Height="{StaticResource History.SectionHeaderHeight}" />
+                        <ItemsPresenter />
+                    </StackPanel>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <DataTemplate x:Key="HistorySectionHeader">
+        <TextBlock Style="{StaticResource Text.HistorySection}" Text="{Binding Name.Title}"
+                   Margin="{StaticResource History.SectionHeaderMargin}" />
+    </DataTemplate>
+
+    <!-- The keyboard's ring around a row, just inside it so it never covers the rows beside it. -->
+    <Style x:Key="HistoryRowFocusVisual">
+        <Setter Property="Control.Template">
+            <Setter.Value>
+                <ControlTemplate>
+                    <controls:PanelShape Stroke="{StaticResource Brush.State.FocusRing}"
+                                         StrokeThickness="{StaticResource StrokeThickness.FocusRing}"
+                                         CornerSize="{StaticResource Radius.HistoryRow}" />
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- A conversation's row: nothing of its own on the sidebar, a faint white layer while hovered, and a clean lighter
+         layer with smooth corners when it is the one open. The keyboard rings it only while moving through the list. -->
+    <Style x:Key="HistoryRowContainer" TargetType="ListBoxItem">
+        <Setter Property="Height" Value="{StaticResource History.RowHeight}" />
+        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+        <Setter Property="VerticalContentAlignment" Value="Stretch" />
+        <Setter Property="FocusVisualStyle" Value="{StaticResource HistoryRowFocusVisual}" />
+        <Setter Property="AutomationProperties.Name" Value="{Binding Title}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ListBoxItem">
+                    <Grid Background="Transparent">
+                        <controls:PanelShape x:Name="StateLayer" CornerSize="{StaticResource Radius.HistoryRow}" />
+                        <ContentPresenter />
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="StateLayer" Property="Fill" Value="{StaticResource Brush.Surface.HistoryRowHover}" />
+                        </Trigger>
+                        <Trigger Property="IsSelected" Value="True">
+                            <Setter TargetName="StateLayer" Property="Fill" Value="{StaticResource Brush.Surface.HistoryRowSelected}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- What a row shows: the conversation's title over as much of the latest answer as fits in two lines, or, for a
+         conversation with an attached image, the title beside the newest one. -->
+    <DataTemplate x:Key="HistoryRow" DataType="{x:Type vm:HistoryConversationViewModel}">
+        <Grid Margin="{StaticResource History.RowPadding}">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <StackPanel VerticalAlignment="Center">
+                <TextBlock x:Name="Title" Style="{StaticResource Text.HistoryRowTitle}" Text="{Binding Title}" />
+                <TextBlock x:Name="Preview" Style="{StaticResource Text.HistoryRowPreview}"
+                           controls:SearchHighlight.Text="{Binding Preview}"
+                           controls:SearchHighlight.Matches="{Binding PreviewMatches}"
+                           Margin="{StaticResource History.RowPreviewMargin}" Visibility="Collapsed" />
+            </StackPanel>
+            <Rectangle x:Name="Thumbnail" Grid.Column="1" Width="{StaticResource History.RowThumbnailSize}"
+                       Height="{StaticResource History.RowThumbnailSize}" VerticalAlignment="Center"
+                       Margin="{StaticResource History.RowThumbnailMargin}"
+                       controls:CornerClip.CornerSize="{StaticResource Radius.HistoryRowThumbnail}"
+                       AutomationProperties.Name="{Binding Image.Name}">
+                <Rectangle.Fill>
+                    <ImageBrush ImageSource="{Binding Image.Thumbnail}" Stretch="UniformToFill"
+                                RenderOptions.BitmapScalingMode="HighQuality" />
+                </Rectangle.Fill>
+            </Rectangle>
+        </Grid>
+        <DataTemplate.Triggers>
+            <DataTrigger Binding="{Binding Image}" Value="{x:Null}">
+                <Setter TargetName="Preview" Property="Visibility" Value="Visible" />
+                <Setter TargetName="Thumbnail" Property="Visibility" Value="Collapsed" />
+            </DataTrigger>
+            <DataTrigger Binding="{Binding Preview}" Value="">
+                <Setter TargetName="Preview" Property="Visibility" Value="Collapsed" />
+            </DataTrigger>
+        </DataTemplate.Triggers>
+    </DataTemplate>
+
+    <!-- The list of conversations: rows in sections, scrolling without a visible scroll bar and passing under the
+         sidebar's buttons as the cards do. Only the rows and headers in view are created, and scrolled-away rows are
+         reused. -->
+    <Style x:Key="HistoryConversationRows" TargetType="ListBox">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+        <Setter Property="KeyboardNavigation.DirectionalNavigation" Value="Contained" />
+        <Setter Property="ScrollViewer.CanContentScroll" Value="True" />
+        <Setter Property="VirtualizingPanel.IsVirtualizing" Value="True" />
+        <Setter Property="VirtualizingPanel.IsVirtualizingWhenGrouping" Value="True" />
+        <Setter Property="VirtualizingPanel.VirtualizationMode" Value="Recycling" />
+        <Setter Property="VirtualizingPanel.ScrollUnit" Value="Pixel" />
+        <Setter Property="ItemContainerStyle" Value="{StaticResource HistoryRowContainer}" />
+        <Setter Property="ItemTemplate" Value="{StaticResource HistoryRow}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ListBox">
+                    <controls:FadingScrollViewer x:Name="ScrollViewer" Background="Transparent" Focusable="False"
+                                                 VerticalScrollBarVisibility="Hidden"
+                                                 HorizontalScrollBarVisibility="Disabled" CanContentScroll="True"
+                                                 TopFade="{StaticResource History.ListTopFade}">
+                        <ItemsPresenter Margin="{StaticResource History.RowsPadding}" />
+                    </controls:FadingScrollViewer>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- The view menu, which chooses between the grid and the list. -->
+    <Style x:Key="HistoryViewMenu" TargetType="ContextMenu" BasedOn="{StaticResource GlassMenu}">
+        <Setter Property="HorizontalOffset" Value="{StaticResource History.ViewMenuOffsetX}" />
+        <Setter Property="VerticalOffset" Value="{StaticResource History.ViewMenuOffsetY}" />
+    </Style>
+
+    <!-- What the workspace says while no conversation is open. -->
+    <Style x:Key="Text.EmptyState" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{StaticResource Font.Display}" />
+        <Setter Property="FontSize" Value="{StaticResource FontSize.EmptyState}" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Foreground" Value="{StaticResource Brush.Text.EmptyState}" />
+    </Style>
+
+</ResourceDictionary>

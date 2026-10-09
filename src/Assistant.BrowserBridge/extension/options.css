@@ -1,0 +1,100 @@
+/* The extension's options page: one setting, two choices. Plain, and it follows the browser's light or dark appearance. */
+
+:root {
+  color-scheme: light dark;
+  --text: #1f1f1f;
+  --muted: #5f5f5f;
+  --line: #d0d0d0;
+  --plate: #f6f6f6;
+  --accent: #0b6bcb;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --text: #f0f0f0;
+    --muted: #b0b0b0;
+    --line: #4a4a4a;
+    --plate: #2b2b2b;
+    --accent: #6cb2ff;
+  }
+}
+
+body {
+  margin: 0;
+  background: transparent;
+  color: var(--text);
+  font: 14px/1.45 "Segoe UI", system-ui, sans-serif;
+}
+
+main {
+  box-sizing: border-box;
+  max-width: 560px;
+  padding: 20px 24px 28px;
+}
+
+h1 {
+  margin: 0 0 8px;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.intro {
+  margin: 0 0 18px;
+  color: var(--muted);
+}
+
+fieldset {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+legend {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.choice {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin: 0 0 10px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--plate);
+  cursor: pointer;
+}
+
+.choice:has(input:checked) {
+  border-color: var(--accent);
+}
+
+.choice input {
+  margin: 3px 0 0;
+  accent-color: var(--accent);
+}
+
+.words {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.name {
+  font-weight: 600;
+}
+
+.detail {
+  color: var(--muted);
+}
+
+#status {
+  min-height: 1.45em;
+  margin: 12px 0 0;
+  color: var(--muted);
+}

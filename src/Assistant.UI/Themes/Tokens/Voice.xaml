@@ -1,0 +1,32 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+                    xmlns:po="http://schemas.microsoft.com/winfx/2006/xaml/presentation/options"
+                    xmlns:voice="clr-namespace:Assistant.UI.Voice"
+                    mc:Ignorable="po">
+
+    <!-- The voice visualizer (Controls/VoiceGlow), shown only while voice input is on. Never part of a surface's
+         normal glass. -->
+
+    <!-- Each ellipse of the glow: solid white at its core, then fading softly, shaped after the glow at rest in the
+         floating conversation reference. It maps to each ellipse's bounds. -->
+    <RadialGradientBrush x:Key="Brush.VoiceGlow" po:Freeze="True">
+        <GradientStop Offset="0" Color="#FFFFFFFF" />
+        <GradientStop Offset="0.28" Color="#FFFFFFFF" />
+        <GradientStop Offset="0.38" Color="#C7FFFFFF" />
+        <GradientStop Offset="0.48" Color="#80FFFFFF" />
+        <GradientStop Offset="0.58" Color="#4DFFFFFF" />
+        <GradientStop Offset="0.68" Color="#2BFFFFFF" />
+        <GradientStop Offset="0.78" Color="#16FFFFFF" />
+        <GradientStop Offset="0.9" Color="#08FFFFFF" />
+        <GradientStop Offset="1" Color="#00FFFFFF" />
+    </RadialGradientBrush>
+
+    <!-- On the floating conversation panel: at rest, a wide dome whose white core rises about 32 DIPs at the middle
+         of the bottom edge, as in the reference; full voice pushes its glow up toward the middle of the panel. -->
+    <voice:VoiceGlowShape x:Key="VoiceGlow.Panel" RestHeight="110" PeakHeight="280" SwellHeight="240" WidthRatio="1.15" />
+
+    <!-- On the Search or Ask bar: the same glow, scaled to the pill, staying low enough to keep the text readable. -->
+    <voice:VoiceGlowShape x:Key="VoiceGlow.Bar" RestHeight="26" PeakHeight="58" SwellHeight="50" WidthRatio="1" />
+
+</ResourceDictionary>

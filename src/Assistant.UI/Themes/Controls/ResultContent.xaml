@@ -1,0 +1,356 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sys="clr-namespace:System;assembly=System.Runtime"
+                    xmlns:controls="clr-namespace:Assistant.UI.Controls"
+                    xmlns:domain="clr-namespace:Assistant.Core.Domain;assembly=Assistant.Core"
+                    xmlns:messages="clr-namespace:Assistant.UI.Messages">
+
+    <!-- How each kind of result in an answer is drawn, found by the type of its content (Messages/MessageContent). A
+         rich answer card is drawn inside the shared black card frame (Messages.xaml); code, galleries and lists of files
+         have presentations of their own and are never framed. All of them are as wide as a card, reaching 14 past the
+         text column on each side. StaticResource cannot see sibling dictionaries in Theme.xaml, so this dictionary
+         merges the ones it needs. -->
+    <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="../Tokens/Typography.xaml" />
+        <ResourceDictionary Source="../Tokens/Surfaces.xaml" />
+        <ResourceDictionary Source="../Tokens/Strokes.xaml" />
+        <ResourceDictionary Source="../Tokens/States.xaml" />
+        <ResourceDictionary Source="../Tokens/Radii.xaml" />
+        <ResourceDictionary Source="../Tokens/Spacing.xaml" />
+        <ResourceDictionary Source="../Icons.xaml" />
+        <ResourceDictionary Source="IconButton.xaml" />
+        <ResourceDictionary Source="Menu.xaml" />
+    </ResourceDictionary.MergedDictionaries>
+
+    <!-- A rich answer card, measured from the result card reference, in DIPs, inside the card frame's padding: the
+         result's figures start 20 below the caption's, and its baseline is 36 above the card's bottom; the copy button
+         is a 24 disc, 18 in from the card's right edge and centered on the card, whose padding is 3.5 deeper below
+         than above. The line under the result is provisional. -->
+    <Thickness x:Key="Card.ResultMargin">0,-2.4,0,-0.13</Thickness>
+    <Thickness x:Key="Card.SecondaryMargin">0,4,0,0</Thickness>
+    <Thickness x:Key="Card.CopyButtonMargin">12,3.5,0,0</Thickness>
+    <sys:Double x:Key="Size.CopyButton">24</sys:Double>
+
+    <!-- A code block: its code lines up with the text column, 14 in, under a header with the language and the copy
+         button. Provisional until a reference shows one. -->
+    <Thickness x:Key="Code.Padding">14,10,10,15</Thickness>
+    <Thickness x:Key="Code.TextMargin">0,7,4,0</Thickness>
+
+    <!-- A gallery, measured from the photo reference: square tiles three across, 1 apart. -->
+    <sys:Int32 x:Key="Gallery.Columns">3</sys:Int32>
+    <sys:Double x:Key="Gallery.Spacing">1</sys:Double>
+
+    <!-- A list of files: one row each, its icon in the text column, with hairlines between rows that start under the
+         names. Provisional until a reference shows one. -->
+    <Thickness x:Key="FileList.Padding">0,4</Thickness>
+    <Thickness x:Key="FileList.RowPadding">14,10</Thickness>
+    <Thickness x:Key="FileList.SeparatorMargin">58,0,14,0</Thickness>
+    <Thickness x:Key="FileList.HoverMargin">6,1</Thickness>
+    <Thickness x:Key="FileList.TextMargin">12,0,0,0</Thickness>
+    <Thickness x:Key="FileList.SnippetMargin">0,3,0,0</Thickness>
+    <sys:Double x:Key="Size.FileIcon">32</sys:Double>
+    <CornerRadius x:Key="Radius.FileIcon">8</CornerRadius>
+    <sys:Double x:Key="FileList.SnippetMaxHeight">36</sys:Double>
+
+    <!-- Each image or file in a gallery or list is named by its own name for assistive technology, rather than by its
+         type. -->
+    <Style x:Key="NamedItemContainer" TargetType="ContentPresenter">
+        <Setter Property="AutomationProperties.Name" Value="{Binding Name}" />
+    </Style>
+
+    <!-- What can be done with a file, folder or image in an answer, in the app's own menu: open it, show it in File
+         Explorer, or attach it to the conversation (only an image, or a document the Assistant reads, can be attached, and only
+         where the conversation takes attachments). The commands are handled by the conversation view (Messages/FileActions). A menu has one owner, so
+         each file gets its own; its items act on the file it opens over, whose data it takes as its own. It opens with
+         its glass where the pointer is, past the room its shadow takes. -->
+    <ContextMenu x:Key="FileActionsMenu" x:Shared="False" Style="{StaticResource GlassMenu}" Placement="MousePoint"
+                 HorizontalOffset="-28" VerticalOffset="-26"
+                 DataContext="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource Self}}"
+                 AutomationProperties.Name="File actions">
+        <MenuItem Header="Open" Command="{x:Static messages:FileActions.Open}" CommandParameter="{Binding}">
+            <MenuItem.Icon>
+                <Path Style="{StaticResource IconGlyph}" StrokeThickness="1" Data="{StaticResource Icon.Document}"
+                      Stretch="Uniform" Width="8" Height="10.3" HorizontalAlignment="Right" />
+            </MenuItem.Icon>
+        </MenuItem>
+        <MenuItem Header="Show in Explorer" Command="{x:Static messages:FileActions.Reveal}" CommandParameter="{Binding}">
+            <MenuItem.Icon>
+                <Path Style="{StaticResource IconGlyph}" StrokeThickness="1" Data="{StaticResource Icon.Folder}"
+                      Stretch="Uniform" Width="10.45" Height="8.1" HorizontalAlignment="Right" />
+            </MenuItem.Icon>
+        </MenuItem>
+        <MenuItem Header="Attach to conversation" Command="{x:Static messages:FileActions.Attach}"
+                  CommandParameter="{Binding}">
+            <MenuItem.Icon>
+                <Path Style="{StaticResource IconGlyph}" StrokeThickness="1" Data="{StaticResource Icon.Plus}"
+                      Stretch="Uniform" Width="8.5" Height="8.5" HorizontalAlignment="Right" />
+            </MenuItem.Icon>
+        </MenuItem>
+    </ContextMenu>
+
+    <!-- The round copy button of a card or code block: a dark disc with the copy glyph, which turns into a check mark
+         for a moment once clicked. Give each use an AutomationProperties.Name. -->
+    <Style x:Key="CopyButton" TargetType="Button">
+        <Setter Property="Width" Value="{StaticResource Size.CopyButton}" />
+        <Setter Property="Height" Value="{StaticResource Size.CopyButton}" />
+        <Setter Property="Background" Value="{StaticResource Brush.Control.CardButton}" />
+        <Setter Property="Foreground" Value="{StaticResource Brush.Glyph.CardButton}" />
+        <Setter Property="FocusVisualStyle" Value="{StaticResource FocusVisual.Circle}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Grid>
+                        <Ellipse Fill="{TemplateBinding Background}" />
+                        <Ellipse x:Name="StateLayer" Fill="Transparent" />
+
+                        <!-- The glyph sits half a DIP left of and a quarter below center, as in the reference. -->
+                        <Path x:Name="CopyGlyph" Fill="{TemplateBinding Foreground}" Data="{StaticResource Icon.Copy}"
+                              Width="10" Height="12.5" Margin="0,0.5,1,0"
+                              HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        <Path x:Name="CheckGlyph" Style="{StaticResource IconGlyph}" StrokeThickness="1.6"
+                              Data="{StaticResource Icon.Check}" Width="10" Height="8.7" Opacity="0"
+                              HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="StateLayer" Property="Fill" Value="{StaticResource Brush.State.Hover}" />
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="StateLayer" Property="Fill" Value="{StaticResource Brush.State.Pressed}" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="{StaticResource Opacity.State.Disabled}" />
+                        </Trigger>
+
+                        <!-- A state change, not motion: the check replaces the glyph outright and goes the same way. -->
+                        <EventTrigger RoutedEvent="ButtonBase.Click">
+                            <BeginStoryboard>
+                                <Storyboard>
+                                    <DoubleAnimationUsingKeyFrames Storyboard.TargetName="CopyGlyph"
+                                                                   Storyboard.TargetProperty="Opacity">
+                                        <DiscreteDoubleKeyFrame KeyTime="0" Value="0" />
+                                        <DiscreteDoubleKeyFrame KeyTime="0:0:1.5" Value="1" />
+                                    </DoubleAnimationUsingKeyFrames>
+                                    <DoubleAnimationUsingKeyFrames Storyboard.TargetName="CheckGlyph"
+                                                                   Storyboard.TargetProperty="Opacity">
+                                        <DiscreteDoubleKeyFrame KeyTime="0" Value="1" />
+                                        <DiscreteDoubleKeyFrame KeyTime="0:0:1.5" Value="0" />
+                                    </DoubleAnimationUsingKeyFrames>
+                                </Storyboard>
+                            </BeginStoryboard>
+                        </EventTrigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- A rich answer card (and a calculation, which is one): the dim caption over the large result, an optional line
+         under it, and the copy button on the right. The card frame around it is the shared MessageCard style. -->
+    <DataTemplate DataType="{x:Type messages:RichAnswerCard}">
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <StackPanel>
+                <TextBlock Style="{StaticResource Text.CardCaption}" Text="{Binding Caption}" TextWrapping="Wrap" />
+                <TextBlock Style="{StaticResource Text.CardResult}" Text="{Binding Result}" TextWrapping="Wrap"
+                           Margin="{StaticResource Card.ResultMargin}" />
+                <TextBlock x:Name="Secondary" Style="{StaticResource Text.CardSecondary}" Text="{Binding Secondary}"
+                           TextWrapping="Wrap" Margin="{StaticResource Card.SecondaryMargin}" />
+            </StackPanel>
+            <Button x:Name="Copy" Grid.Column="1" Style="{StaticResource CopyButton}" Command="{Binding CopyCommand}"
+                    VerticalAlignment="Center" Margin="{StaticResource Card.CopyButtonMargin}"
+                    AutomationProperties.Name="Copy result" />
+        </Grid>
+        <DataTemplate.Triggers>
+            <DataTrigger Binding="{Binding Secondary}" Value="{x:Null}">
+                <Setter TargetName="Secondary" Property="Visibility" Value="Collapsed" />
+            </DataTrigger>
+            <DataTrigger Binding="{Binding CopyCommand}" Value="{x:Null}">
+                <Setter TargetName="Copy" Property="Visibility" Value="Collapsed" />
+            </DataTrigger>
+        </DataTemplate.Triggers>
+    </DataTemplate>
+
+    <!-- A block of code: monospaced on a dark gray surface, never a black card, with the language and a copy button
+         above the code. Long lines wrap, since the panel is narrow. -->
+    <DataTemplate DataType="{x:Type messages:CodeContent}">
+        <Grid Margin="{DynamicResource Message.CardBleed}">
+            <controls:PanelShape Fill="{StaticResource Brush.Surface.Code}" CornerSize="{StaticResource Radius.ContentBlock}" />
+            <Grid Margin="{StaticResource Code.Padding}">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition />
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBlock x:Name="Language" Style="{StaticResource Text.Caption}" Text="{Binding Language}"
+                           VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                <Button x:Name="Copy" Grid.Column="1" Style="{StaticResource CopyButton}"
+                        Background="{StaticResource Brush.Control.CodeButton}" Command="{Binding CopyCommand}"
+                        AutomationProperties.Name="Copy code" />
+                <TextBlock x:Name="Code" Grid.Row="1" Grid.ColumnSpan="2" Style="{StaticResource Text.Code}"
+                           Text="{Binding DisplayCode}" TextWrapping="Wrap" Margin="{StaticResource Code.TextMargin}"
+                           AutomationProperties.Name="Code" />
+            </Grid>
+        </Grid>
+        <DataTemplate.Triggers>
+            <DataTrigger Binding="{Binding Language}" Value="{x:Null}">
+                <Setter TargetName="Language" Property="Visibility" Value="Collapsed" />
+            </DataTrigger>
+            <DataTrigger Binding="{Binding CopyCommand}" Value="{x:Null}">
+                <Setter TargetName="Copy" Property="Visibility" Value="Collapsed" />
+            </DataTrigger>
+        </DataTemplate.Triggers>
+    </DataTemplate>
+
+    <!-- A block of code the model wrote inside its prose (```): the same dark gray block with its language and copy
+         button, but in the text column, as wide as the prose around it. -->
+    <DataTemplate DataType="{x:Type messages:CodeBlock}">
+        <Grid>
+            <controls:PanelShape Fill="{StaticResource Brush.Surface.Code}" CornerSize="{StaticResource Radius.ContentBlock}" />
+            <Grid Margin="{StaticResource Code.Padding}">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition />
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBlock x:Name="Language" Style="{StaticResource Text.Caption}" Text="{Binding Language}"
+                           VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                <Button Grid.Column="1" Style="{StaticResource CopyButton}"
+                        Background="{StaticResource Brush.Control.CodeButton}"
+                        Command="{x:Static messages:CodeBlock.CopyCommand}" CommandParameter="{Binding Code}"
+                        AutomationProperties.Name="Copy code" />
+                <TextBlock Grid.Row="1" Grid.ColumnSpan="2" Style="{StaticResource Text.Code}" Text="{Binding Code}"
+                           TextWrapping="Wrap" Margin="{StaticResource Code.TextMargin}" AutomationProperties.Name="Code" />
+            </Grid>
+        </Grid>
+        <DataTemplate.Triggers>
+            <DataTrigger Binding="{Binding Language}" Value="{x:Null}">
+                <Setter TargetName="Language" Property="Visibility" Value="Collapsed" />
+            </DataTrigger>
+        </DataTemplate.Triggers>
+    </DataTemplate>
+
+    <!-- A gallery: the images themselves, three across in square tiles on dark gray, clipped by a card's corners but
+         never in a card. Each image fills its tile and is cropped around its center. -->
+    <DataTemplate DataType="{x:Type messages:ImageCollection}">
+        <Grid Margin="{DynamicResource Message.CardBleed}" Background="{StaticResource Brush.Surface.Gallery}"
+              controls:CornerClip.CornerSize="{StaticResource Radius.Card}">
+            <ItemsControl ItemsSource="{Binding Images}" Focusable="False" AutomationProperties.Name="Images"
+                          ItemContainerStyle="{StaticResource NamedItemContainer}">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <controls:GalleryPanel Columns="{StaticResource Gallery.Columns}"
+                                               Spacing="{StaticResource Gallery.Spacing}" />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+            </ItemsControl>
+        </Grid>
+    </DataTemplate>
+
+    <!-- A tile opens its image when it is clicked; its menu (right click) also shows it in File Explorer, or attaches it to
+         the conversation. A tile whose image only exists in memory has no file, and so nothing to open. -->
+    <DataTemplate DataType="{x:Type messages:ImageItem}">
+        <Grid ClipToBounds="True" Background="Transparent" Cursor="Hand" ContextMenu="{StaticResource FileActionsMenu}">
+            <Grid.InputBindings>
+                <MouseBinding Gesture="LeftClick" Command="{x:Static messages:FileActions.Open}"
+                              CommandParameter="{Binding}" />
+            </Grid.InputBindings>
+            <Image Source="{Binding Thumbnail}" Stretch="UniformToFill" HorizontalAlignment="Center"
+                   VerticalAlignment="Center" RenderOptions.BitmapScalingMode="HighQuality"
+                   AutomationProperties.Name="{Binding Name}" />
+        </Grid>
+    </DataTemplate>
+
+    <!-- A list of files: a row for each, with an icon for its kind, its name, where it is and when it changed, and any
+         matching text, on a faint layer over the glass. -->
+    <DataTemplate DataType="{x:Type messages:FileCollection}">
+        <Grid Margin="{DynamicResource Message.CardBleed}">
+            <controls:PanelShape Fill="{StaticResource Brush.Surface.FileList}"
+                                 CornerSize="{StaticResource Radius.ContentBlock}" />
+            <ItemsControl ItemsSource="{Binding Files}" Focusable="False" Margin="{StaticResource FileList.Padding}"
+                          AutomationProperties.Name="Files" ItemContainerStyle="{StaticResource NamedItemContainer}" />
+        </Grid>
+    </DataTemplate>
+
+    <!-- A row opens its file or folder when it is clicked, and is lit a little under the pointer; its menu (right click) also
+         shows it in File Explorer, or attaches it to the conversation when it is an image. -->
+    <DataTemplate DataType="{x:Type messages:FileItem}">
+        <Grid x:Name="Root" Background="Transparent" Cursor="Hand" ContextMenu="{StaticResource FileActionsMenu}">
+            <Grid.InputBindings>
+                <MouseBinding Gesture="LeftClick" Command="{x:Static messages:FileActions.Open}"
+                              CommandParameter="{Binding}" />
+            </Grid.InputBindings>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition />
+            </Grid.RowDefinitions>
+            <Border x:Name="Separator" Height="{StaticResource StrokeThickness.Hairline}"
+                    Background="{StaticResource Brush.Stroke.Separator}" Margin="{StaticResource FileList.SeparatorMargin}" />
+            <Border x:Name="Hover" Grid.Row="1" Background="Transparent" CornerRadius="{StaticResource Radius.FileIcon}"
+                    Margin="{StaticResource FileList.HoverMargin}" />
+            <Grid Grid.Row="1" Margin="{StaticResource FileList.RowPadding}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition />
+                </Grid.ColumnDefinitions>
+
+                <!-- The icon: a file's type, such as PDF, or a glyph for a folder, an app or a file without one. -->
+                <Grid Width="{StaticResource Size.FileIcon}" Height="{StaticResource Size.FileIcon}" VerticalAlignment="Top"
+                      TextElement.Foreground="{StaticResource Brush.Text.Message}">
+                    <Border CornerRadius="{StaticResource Radius.FileIcon}" Background="{StaticResource Brush.Surface.FileIcon}" />
+                    <TextBlock x:Name="Type" Text="{Binding TypeLabel}" FontFamily="{StaticResource Font.Text}"
+                               FontSize="{StaticResource FontSize.FileType}" FontWeight="SemiBold"
+                               HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    <Path x:Name="Glyph" Style="{StaticResource IconGlyph}" StrokeThickness="1.25"
+                          Data="{StaticResource Icon.Document}"
+                          HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="Collapsed" />
+                </Grid>
+
+                <StackPanel Grid.Column="1" Margin="{StaticResource FileList.TextMargin}" VerticalAlignment="Center">
+                    <TextBlock Style="{StaticResource Text.Message}" Text="{Binding Name}" TextTrimming="CharacterEllipsis" />
+                    <TextBlock x:Name="Details" Style="{StaticResource Text.Caption}" Text="{Binding Details}"
+                               TextTrimming="CharacterEllipsis" />
+                    <TextBlock x:Name="Snippet" Style="{StaticResource Text.BodySmall}"
+                               Foreground="{StaticResource Brush.Text.Secondary}" Text="{Binding Snippet}"
+                               TextWrapping="Wrap" TextTrimming="CharacterEllipsis"
+                               MaxHeight="{StaticResource FileList.SnippetMaxHeight}"
+                               Margin="{StaticResource FileList.SnippetMargin}" />
+                </StackPanel>
+            </Grid>
+        </Grid>
+        <DataTemplate.Triggers>
+            <DataTrigger Binding="{Binding RelativeSource={RelativeSource PreviousData}}" Value="{x:Null}">
+                <Setter TargetName="Separator" Property="Visibility" Value="Collapsed" />
+            </DataTrigger>
+            <Trigger SourceName="Root" Property="IsMouseOver" Value="True">
+                <Setter TargetName="Hover" Property="Background" Value="{StaticResource Brush.State.Hover}" />
+            </Trigger>
+            <DataTrigger Binding="{Binding TypeLabel}" Value="{x:Null}">
+                <Setter TargetName="Type" Property="Visibility" Value="Collapsed" />
+                <Setter TargetName="Glyph" Property="Visibility" Value="Visible" />
+            </DataTrigger>
+            <DataTrigger Binding="{Binding Kind}" Value="{x:Static domain:SearchResultItemType.Folder}">
+                <Setter TargetName="Glyph" Property="Data" Value="{StaticResource Icon.Folder}" />
+            </DataTrigger>
+            <DataTrigger Binding="{Binding Kind}" Value="{x:Static domain:SearchResultItemType.App}">
+                <Setter TargetName="Glyph" Property="Data" Value="{StaticResource Icon.App}" />
+            </DataTrigger>
+            <DataTrigger Binding="{Binding Details}" Value="">
+                <Setter TargetName="Details" Property="Visibility" Value="Collapsed" />
+            </DataTrigger>
+            <DataTrigger Binding="{Binding Snippet}" Value="{x:Null}">
+                <Setter TargetName="Snippet" Property="Visibility" Value="Collapsed" />
+            </DataTrigger>
+        </DataTemplate.Triggers>
+    </DataTemplate>
+
+</ResourceDictionary>

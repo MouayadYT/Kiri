@@ -1,0 +1,170 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sys="clr-namespace:System;assembly=System.Runtime"
+                    xmlns:controls="clr-namespace:Assistant.UI.Controls"
+                    xmlns:windowing="clr-namespace:Assistant.UI.Windowing">
+
+    <!-- The tokens, glyphs and styles these styles use. StaticResource cannot see sibling dictionaries in Theme.xaml,
+         so each control dictionary merges the dictionaries it needs. -->
+    <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="../Tokens/Typography.xaml" />
+        <ResourceDictionary Source="../Tokens/Surfaces.xaml" />
+        <ResourceDictionary Source="../Tokens/Strokes.xaml" />
+        <ResourceDictionary Source="../Tokens/States.xaml" />
+        <ResourceDictionary Source="../Tokens/Radii.xaml" />
+        <ResourceDictionary Source="../Tokens/Shadows.xaml" />
+        <ResourceDictionary Source="../Icons.xaml" />
+        <ResourceDictionary Source="IconButton.xaml" />
+    </ResourceDictionary.MergedDictionaries>
+
+    <!-- A compact menu, measured from the History window's view menu reference, in DIPs: at least 93 wide, with 5.45
+         above and below its items, each 24.05 tall. In an item, the check mark of the chosen one begins 13 from the
+         menu's left, its glyph ends 41.45 from it and its words begin 50 from it. The template leaves room around the
+         glass for its shadow, so placement offsets include ShadowRoom. -->
+    <Thickness x:Key="Menu.ShadowRoom">28,26,28,32</Thickness>
+    <sys:Double x:Key="Menu.MinWidth">93</sys:Double>
+    <Thickness x:Key="Menu.Padding">0,5.45,0,5.45</Thickness>
+    <sys:Double x:Key="Menu.ItemHeight">24.05</sys:Double>
+    <Thickness x:Key="Menu.HighlightMargin">5,0,5,0</Thickness>
+    <Thickness x:Key="Menu.CheckMargin">13,0.9,0,0</Thickness>
+    <Thickness x:Key="Menu.GlyphMargin">31,0,0,0</Thickness>
+    <sys:Double x:Key="Menu.GlyphWidth">10.45</sys:Double>
+    <Thickness x:Key="Menu.LabelMargin">50,0,17.5,1.4</Thickness>
+
+    <!-- The rim lies just inside the hairline around the glass. -->
+    <Thickness x:Key="Menu.RimInset">0.5</Thickness>
+
+    <!-- One of the menu's items: a check mark in front of the chosen one, its glyph (the MenuItem's Icon, aligned to
+         the right of its column) and its words. The item under the pointer or the keyboard is lit by a white layer with
+         corners that follow the menu's. -->
+    <Style x:Key="GlassMenuItem" TargetType="MenuItem">
+        <Setter Property="OverridesDefaultStyle" Value="True" />
+        <Setter Property="Height" Value="{StaticResource Menu.ItemHeight}" />
+        <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="MenuItem">
+                    <Grid Background="Transparent">
+                        <controls:PanelShape x:Name="Highlight" Margin="{StaticResource Menu.HighlightMargin}"
+                                             CornerSize="{StaticResource Radius.MenuItem}" />
+                        <Path x:Name="Check" Style="{StaticResource IconGlyph}" StrokeThickness="1.9"
+                              Data="{StaticResource Icon.MenuCheck}" HorizontalAlignment="Left"
+                              VerticalAlignment="Center" Margin="{StaticResource Menu.CheckMargin}" Visibility="Hidden" />
+                        <ContentPresenter x:Name="Glyph" ContentSource="Icon" HorizontalAlignment="Left"
+                                          VerticalAlignment="Center" Width="{StaticResource Menu.GlyphWidth}"
+                                          Margin="{StaticResource Menu.GlyphMargin}" />
+                        <ContentPresenter x:Name="Label" ContentSource="Header" VerticalAlignment="Center"
+                                          Margin="{StaticResource Menu.LabelMargin}" RecognizesAccessKey="True" />
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsChecked" Value="True">
+                            <Setter TargetName="Check" Property="Visibility" Value="Visible" />
+                        </Trigger>
+                        <Trigger Property="IsHighlighted" Value="True">
+                            <Setter TargetName="Highlight" Property="Fill" Value="{StaticResource Brush.State.Hover}" />
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="Highlight" Property="Fill" Value="{StaticResource Brush.State.Pressed}" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="{StaticResource Opacity.State.Disabled}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- An item of a menu that has no check marks or glyphs, such as the composer's Photos and Files: only its words, 16 in from
+         the menu's left, lit the same way under the pointer or the keyboard. -->
+    <Thickness x:Key="Menu.PlainLabelMargin">16,0,24,1.4</Thickness>
+    <Style x:Key="GlassMenuItemPlain" TargetType="MenuItem">
+        <Setter Property="OverridesDefaultStyle" Value="True" />
+        <Setter Property="Height" Value="{StaticResource Menu.ItemHeight}" />
+        <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="MenuItem">
+                    <Grid Background="Transparent">
+                        <controls:PanelShape x:Name="Highlight" Margin="{StaticResource Menu.HighlightMargin}"
+                                             CornerSize="{StaticResource Radius.MenuItem}" />
+                        <ContentPresenter ContentSource="Header" VerticalAlignment="Center"
+                                          Margin="{StaticResource Menu.PlainLabelMargin}" RecognizesAccessKey="True" />
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsHighlighted" Value="True">
+                            <Setter TargetName="Highlight" Property="Fill" Value="{StaticResource Brush.State.Hover}" />
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="Highlight" Property="Fill" Value="{StaticResource Brush.State.Pressed}" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="{StaticResource Opacity.State.Disabled}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- The menu: gray glass with smooth corners, a light rim inside a dark hairline and a soft shadow around it. The
+         glass is translucent only while a blurred backdrop lies behind it (Windowing/MenuBackdrop, attached to the menu; a
+         menu without one, such as the file actions menu in an answer, is opaque), and opaque otherwise
+         (PROJECT_SPEC §4.0). The element named Glass is the glass itself. Arrow keys move through the items and wrap
+         around; Escape, a click outside or choosing an item closes it. -->
+    <Style x:Key="GlassMenu" TargetType="ContextMenu">
+        <Setter Property="OverridesDefaultStyle" Value="True" />
+        <Setter Property="HasDropShadow" Value="False" />
+        <Setter Property="Placement" Value="Relative" />
+        <Setter Property="Foreground" Value="{StaticResource Brush.Text.Menu}" />
+        <Setter Property="FontFamily" Value="{StaticResource Font.Text}" />
+        <Setter Property="FontSize" Value="{StaticResource FontSize.Menu}" />
+        <Setter Property="KeyboardNavigation.DirectionalNavigation" Value="Cycle" />
+        <Setter Property="ItemContainerStyle" Value="{StaticResource GlassMenuItem}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ContextMenu">
+                    <Grid Margin="{StaticResource Menu.ShadowRoom}">
+                        <Grid x:Name="Glass" MinWidth="{StaticResource Menu.MinWidth}">
+                            <Grid controls:OutsideClip.CornerSize="{StaticResource Radius.Menu}" IsHitTestVisible="False">
+                                <controls:PanelShape Fill="{StaticResource Brush.Shadow.Caster}"
+                                                     Margin="{StaticResource Shadow.CasterInset}"
+                                                     CornerSize="{StaticResource Radius.Menu}"
+                                                     Effect="{StaticResource Shadow.Menu}" />
+                            </Grid>
+                            <controls:PanelShape x:Name="Surface" Fill="{StaticResource Brush.Surface.MenuOpaque}"
+                                                 CornerSize="{StaticResource Radius.Menu}" />
+                            <controls:PanelShape Margin="{StaticResource Menu.RimInset}"
+                                                 Stroke="{StaticResource Brush.Stroke.MenuRim}"
+                                                 StrokeThickness="{StaticResource StrokeThickness.Hairline}"
+                                                 CornerSize="{StaticResource Radius.Menu}" />
+                            <controls:PanelShape Stroke="{StaticResource Brush.Stroke.MenuOutline}"
+                                                 StrokeThickness="{StaticResource StrokeThickness.MenuOutline}"
+                                                 CornerSize="{StaticResource Radius.Menu}" />
+                            <ItemsPresenter Margin="{StaticResource Menu.Padding}" />
+                        </Grid>
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="windowing:Backdrop.IsBlurred" Value="True" />
+                                <Condition Property="windowing:MenuBackdrop.HasBackdrop" Value="True" />
+                            </MultiTrigger.Conditions>
+                            <Setter TargetName="Surface" Property="Fill" Value="{StaticResource Brush.Surface.Menu}" />
+                        </MultiTrigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- The menu of the composer's plus, as in the reference: Photos and Files, under the plus, its glass's left edge on the plus's
+         and 8 below it (the offsets take away the room around the glass for its shadow). -->
+    <Style x:Key="AttachMenu" TargetType="ContextMenu" BasedOn="{StaticResource GlassMenu}">
+        <Setter Property="Placement" Value="Bottom" />
+        <Setter Property="HorizontalOffset" Value="-28" />
+        <Setter Property="VerticalOffset" Value="-18" />
+        <Setter Property="ItemContainerStyle" Value="{StaticResource GlassMenuItemPlain}" />
+    </Style>
+
+</ResourceDictionary>

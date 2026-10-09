@@ -1,0 +1,185 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sys="clr-namespace:System;assembly=System.Runtime"
+                    xmlns:controls="clr-namespace:Assistant.UI.Controls">
+    <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="../Tokens/Typography.xaml" />
+        <ResourceDictionary Source="../Tokens/Surfaces.xaml" />
+        <ResourceDictionary Source="../Tokens/States.xaml" />
+        <ResourceDictionary Source="../Tokens/Strokes.xaml" />
+        <ResourceDictionary Source="../Tokens/Caret.xaml" />
+        <ResourceDictionary Source="../Icons.xaml" />
+        <ResourceDictionary Source="IconButton.xaml" />
+    </ResourceDictionary.MergedDictionaries>
+
+    <!-- The highlighted result's icon at the right of the field, measured from the Search reference: 32 across. -->
+    <sys:Double x:Key="Size.PromptTrailingIcon">32</sys:Double>
+
+    <Style TargetType="controls:PromptInputControl">
+        <Setter Property="Focusable" Value="False" />
+        <Setter Property="KeyboardNavigation.IsTabStop" Value="False" />
+        <Setter Property="FontFamily" Value="{StaticResource Font.Display}" />
+        <Setter Property="FontSize" Value="{StaticResource FontSize.Prompt}" />
+        <Setter Property="Foreground" Value="{StaticResource Brush.Text.Primary}" />
+        <!-- These insets preserve the reference pill's measured text and microphone positions. -->
+        <Setter Property="Padding" Value="36,0,30,2.5" />
+        <Setter Property="MinHeight" Value="91" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="controls:PromptInputControl">
+                    <Grid Background="Transparent">
+                        <Grid Margin="{TemplateBinding Padding}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <Grid Margin="0,0,10,0">
+                                <TextBox x:Name="PART_Editor" Background="Transparent" BorderThickness="0" Padding="0"
+                                         VerticalAlignment="Center" FocusVisualStyle="{x:Null}"
+                                         Foreground="{TemplateBinding Foreground}" CaretBrush="Transparent"
+                                         FontFamily="{TemplateBinding FontFamily}" FontSize="{TemplateBinding FontSize}"
+                                         AutomationProperties.Name="{Binding Placeholder, RelativeSource={RelativeSource TemplatedParent}}"
+                                         Text="{Binding Text, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                         AcceptsReturn="{TemplateBinding AllowMultiline}" AcceptsTab="False"
+                                         MinLines="1" MaxLines="6" VerticalScrollBarVisibility="Hidden"
+                                         HorizontalScrollBarVisibility="Hidden" />
+                                <!-- TextBox supplies a 2-DIP text inset of its own. -->
+                                <TextBlock x:Name="Placeholder" Margin="2,0,2,0" VerticalAlignment="Center"
+                                           Text="{TemplateBinding Placeholder}" TextTrimming="CharacterEllipsis"
+                                           Foreground="{StaticResource Brush.Text.Secondary}"
+                                           IsHitTestVisible="False" Visibility="Collapsed" />
+                                <!-- The words being heard while the user speaks (step 125), in the field's own type, where the placeholder is. -->
+                                <TextBlock x:Name="LiveTranscript" Margin="2,0,2,0" VerticalAlignment="Center"
+                                           Text="{TemplateBinding LiveText}" TextTrimming="CharacterEllipsis"
+                                           Foreground="{TemplateBinding Foreground}"
+                                           IsHitTestVisible="False" Visibility="Collapsed" />
+                                <!-- What the highlighted result adds to the typed text, on a plate right after it (the Search reference's
+                                     "Browser - Open" after "brave"): an invisible copy of the typed text takes its room. The text box supplies a
+                                     2-DIP text inset of its own. -->
+                                <controls:CompletionPanel x:Name="PART_Completion" Margin="2,0,0,0" IsHitTestVisible="False"
+                                                          VerticalAlignment="Center" Visibility="Collapsed">
+                                    <TextBlock Text="{Binding Text, RelativeSource={RelativeSource TemplatedParent}}" Opacity="0"
+                                               FontFamily="{TemplateBinding FontFamily}" FontSize="{TemplateBinding FontSize}" />
+                                    <Border CornerRadius="6" Background="{StaticResource Brush.Surface.Completion}" Padding="0,0,5,1">
+                                        <TextBlock Text="{Binding CompletionText, RelativeSource={RelativeSource TemplatedParent}}"
+                                                   FontFamily="{TemplateBinding FontFamily}" FontSize="{TemplateBinding FontSize}"
+                                                   Foreground="{StaticResource Brush.Text.Completion}" />
+                                    </Border>
+                                </controls:CompletionPanel>
+                                <!-- The editor keeps its own caret, drawn transparent, and this one glows in its place. -->
+                                <Canvas IsHitTestVisible="False">
+                                    <controls:GlowCaret x:Name="PART_Caret" Width="{StaticResource Size.CaretWidth}"
+                                                        GlowRadius="{StaticResource Size.CaretGlow}"
+                                                        CoreBrush="{StaticResource Brush.Caret.Core}"
+                                                        UpperGlow="{StaticResource Color.Caret.GlowUpper}"
+                                                        LowerGlow="{StaticResource Color.Caret.GlowLower}" />
+                                </Canvas>
+                            </Grid>
+                            <ContentPresenter x:Name="PART_Trailing" Grid.Column="1" Width="{StaticResource Size.PromptTrailingIcon}"
+                                              Height="{StaticResource Size.PromptTrailingIcon}" Margin="0,0,12,0" VerticalAlignment="Center"
+                                              IsHitTestVisible="False" Content="{TemplateBinding TrailingContent}"
+                                              Visibility="Collapsed" />
+                            <Border x:Name="PART_TrailingLabel" Grid.Column="1" Margin="0,0,12,0" VerticalAlignment="Center" Height="24"
+                                    CornerRadius="12" Padding="10,0,10,1" IsHitTestVisible="False"
+                                    Background="{StaticResource Brush.Surface.ScopeChip}" Visibility="Collapsed">
+                                <TextBlock Text="{TemplateBinding TrailingLabel}" VerticalAlignment="Center" FontFamily="{StaticResource Font.Text}"
+                                           FontWeight="SemiBold" FontSize="{StaticResource FontSize.ResultDetail}"
+                                           Foreground="{StaticResource Brush.Text.ResultSecondary}" />
+                            </Border>
+                            <Button x:Name="Microphone" Grid.Column="2" Style="{StaticResource CircularIconButton}"
+                                    VerticalAlignment="Center" AutomationProperties.Name="Microphone"
+                                    Command="{TemplateBinding MicrophoneCommand}"
+                                    CommandParameter="{TemplateBinding MicrophoneCommandParameter}"
+                                    CommandTarget="{Binding ElementName=PART_Editor}">
+                                <ContentPresenter x:Name="MicrophoneSlot" Content="{TemplateBinding MicrophoneContent}">
+                                    <ContentPresenter.Style>
+                                        <Style TargetType="ContentPresenter">
+                                            <Style.Triggers>
+                                                <Trigger Property="Content" Value="{x:Null}">
+                                                    <Setter Property="ContentTemplate">
+                                                        <Setter.Value>
+                                                            <DataTemplate>
+                                                                <Path Style="{StaticResource IconGlyph}" Data="{StaticResource Icon.Microphone}" />
+                                                            </DataTemplate>
+                                                        </Setter.Value>
+                                                    </Setter>
+                                                </Trigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </ContentPresenter.Style>
+                                </ContentPresenter>
+                            </Button>
+                        </Grid>
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="Text" Value="">
+                            <Setter TargetName="Placeholder" Property="Visibility" Value="Visible" />
+                        </Trigger>
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="Text" Value="" />
+                                <Condition Property="HasLiveText" Value="True" />
+                            </MultiTrigger.Conditions>
+                            <Setter TargetName="Placeholder" Property="Visibility" Value="Collapsed" />
+                            <Setter TargetName="LiveTranscript" Property="Visibility" Value="Visible" />
+                        </MultiTrigger>
+                        <Trigger Property="HasCompletion" Value="True">
+                            <Setter TargetName="PART_Completion" Property="Visibility" Value="Visible" />
+                        </Trigger>
+                        <Trigger Property="HasTrailingContent" Value="True">
+                            <Setter TargetName="PART_Trailing" Property="Visibility" Value="Visible" />
+                        </Trigger>
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="HasTrailingLabel" Value="True" />
+                                <Condition Property="HasTrailingContent" Value="False" />
+                            </MultiTrigger.Conditions>
+                            <Setter TargetName="PART_TrailingLabel" Property="Visibility" Value="Visible" />
+                        </MultiTrigger>
+                        <Trigger Property="AllowMultiline" Value="True">
+                            <Setter TargetName="PART_Editor" Property="TextWrapping" Value="Wrap" />
+                            <Setter TargetName="PART_Editor" Property="VerticalScrollBarVisibility" Value="Auto" />
+                            <Setter TargetName="Microphone" Property="VerticalAlignment" Value="Bottom" />
+                        </Trigger>
+                        <Trigger Property="MicrophoneCommand" Value="{x:Null}">
+                            <!-- Decorative until a host supplies voice handling. Preserve the existing glyph. -->
+                            <Setter TargetName="Microphone" Property="IsEnabled" Value="False" />
+                            <Setter TargetName="Microphone" Property="Opacity" Value="1" />
+                        </Trigger>
+                        <Trigger Property="ShowMicrophone" Value="False">
+                            <Setter TargetName="Microphone" Property="Visibility" Value="Collapsed" />
+                        </Trigger>
+                        <Trigger Property="IsMicrophoneActive" Value="True">
+                            <Setter TargetName="Microphone" Property="Foreground" Value="{StaticResource Brush.Text.Primary}" />
+                            <Setter TargetName="Microphone" Property="AutomationProperties.ItemStatus" Value="Listening" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="{StaticResource Opacity.State.Disabled}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- A host supplies width and surface; this variant grows to six visible lines, then scrolls. -->
+    <Style x:Key="PromptInput.Expanded" TargetType="controls:PromptInputControl"
+           BasedOn="{StaticResource {x:Type controls:PromptInputControl}}">
+        <Setter Property="FontFamily" Value="{StaticResource Font.Text}" />
+        <Setter Property="FontSize" Value="{StaticResource FontSize.Body}" />
+        <Setter Property="Padding" Value="16,12,16,12" />
+        <Setter Property="MinHeight" Value="56" />
+        <Setter Property="AllowMultiline" Value="True" />
+    </Style>
+
+    <!-- The floating conversation's follow-up composer: one line as tall as a glass button, growing to six lines. The
+         panel supplies the glass and the width. -->
+    <Style x:Key="ConversationComposerInput" TargetType="controls:PromptInputControl"
+           BasedOn="{StaticResource PromptInput.Expanded}">
+        <Setter Property="FontSize" Value="{StaticResource FontSize.BodySmall}" />
+        <Setter Property="Padding" Value="15,7.5,12,7.5" />
+        <Setter Property="MinHeight" Value="36" />
+        <Setter Property="ShowMicrophone" Value="False" />
+    </Style>
+</ResourceDictionary>

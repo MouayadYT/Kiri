@@ -1,0 +1,58 @@
+{
+  "extensionName": {
+    "message": "Ask Assistant",
+    "description": "The extension's name, shown in the browser's extension list."
+  },
+  "extensionDescription": {
+    "message": "Adds an Ask Assistant entry to the browser's right-click menu for the Assistant desktop app. It makes no network connections.",
+    "description": "The extension's description, shown in the browser's extension list."
+  },
+  "menuTitle": {
+    "message": "Ask Assistant",
+    "description": "The label of the entry in the right-click menu of selected text. The only place the menu's wording is set."
+  },
+  "optionsTitle": {
+    "message": "Ask Assistant options",
+    "description": "The title of the options page's tab."
+  },
+  "optionsHeading": {
+    "message": "What goes with the text you select",
+    "description": "The options page's heading."
+  },
+  "optionsIntro": {
+    "message": "Choose how much of the page is shared when you choose Ask Assistant on selected text. Nothing is read from a page until you choose it, and nothing leaves this PC.",
+    "description": "The options page's introduction."
+  },
+  "optionsLegend": {
+    "message": "Page context",
+    "description": "The accessible name of the group of two choices."
+  },
+  "modeSelectionTitle": {
+    "message": "Selection Only",
+    "description": "The first choice: share only the selected text."
+  },
+  "modeSelectionDetail": {
+    "message": "Only the words you selected, with the page's title and address. The rest of the page is not read. This is the default.",
+    "description": "What the first choice does."
+  },
+  "modeNearbyTitle": {
+    "message": "Selection + Nearby Context",
+    "description": "The second choice: share the selection and the text around it."
+  },
+  "modeNearbyDetail": {
+    "message": "Also a short stretch of the page's text just before and just after your selection (at most 1,000 characters on each side), cleaned of hidden and unreadable characters. Your browser asks your permission the first time, and you can take it back here or in the extension's settings. The Assistant tells you when it is included.",
+    "description": "What the second choice does."
+  },
+  "optionsSaved": {
+    "message": "Saved. It applies the next time you choose Ask Assistant.",
+    "description": "Said after a choice was saved."
+  },
+  "optionsNotSaved": {
+    "message": "Your choice could not be saved. Try again.",
+    "description": "Said when the browser could not save a choice."
+  },
+  "optionsNotAllowed": {
+    "message": "Not allowed, so only your selection is shared. You can choose Selection + Nearby Context again at any time.",
+    "description": "Said when the user declined the browser's permission prompt for reading the text around a selection."
+  }
+}
