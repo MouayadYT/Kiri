@@ -5,6 +5,8 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <!-- Local builds and packaged builds must report the same release version to the updater. -->
+    <Version Condition="'$(Version)' == ''">$([System.IO.File]::ReadAllText('$(MSBuildThisFileDirectory)version.txt').Trim())</Version>
   </PropertyGroup>
 
   <!-- One System.Text.Json for every program. The app and its helper programs (the model host, the File Explorer entry, the browser

@@ -51,6 +51,7 @@ public interface IUpdateChecker
 /// every answer GitHub gives, also one that says no (404, rate limited), so that nothing is asked again and again when something is off.</item>
 /// <item>A release the user chose to ignore (<see cref="UpdateSettings.DismissedVersion"/>) is not announced again; an even newer one is.</item>
 /// <item>It asks for <c>/releases/latest</c>, which leaves out drafts and pre-releases, and checks for them all the same.</item>
+/// <item>Different published releases are ordered by their publication dates, so restarting the version numbering does not hide an update.</item>
 /// <item>The button looks at once, whatever the last look and whatever was ignored.</item>
 /// </list>
 /// It looks with Local Only mode on as well (the user's choice, 0.1.149: with Local Only on from the first start, a check that waited for it to be off
@@ -214,7 +215,63 @@ public sealed class GitHubUpdateChecker : IUpdateChecker, IDisposable
             return new UpdateCheckResult(null, Failed: true);
         }
 
-        return latest > current ? new UpdateCheckResult(new AvailableUpdate(CurrentVersion, tag.Trim(), page)) : new UpdateCheckResult(null);
+        if (latest == current)
+        {
+            return new UpdateCheckResult(null);
+        }
+
+        // Kiri reset its numbering from 0.1.149 to 0.1.2. Numeric ordering alone both hides that update
+        // and can offer the older build in the reverse direction. GitHub's publication dates establish
+        // the order of released builds; a local file's timestamp or the release-list order cannot.
+        if (!TryPublishedAt(root, out var publishedAt)
+            || await FindCurrentPublicationAsync(current, cancellationToken).ConfigureAwait(false) is not { } currentPublishedAt)
+        {
+            UpdateLog.NotComparable(_logger);
+            return new UpdateCheckResult(null, Failed: true);
+        }
+
+        return publishedAt > currentPublishedAt
+            ? new UpdateCheckResult(new AvailableUpdate(CurrentVersion, tag.Trim(), page))
+            : new UpdateCheckResult(null);
+    }
+
+    // Resolve the installed release rather than trusting an unrelated release or guessing from its number.
+    // Older tags may omit the conventional "v". Only a 404 warrants trying the other spelling.
+    private async Task<DateTimeOffset?> FindCurrentPublicationAsync(Version current, CancellationToken cancellationToken)
+    {
+        var name = CurrentVersion.Trim().TrimStart('v', 'V').Split('+')[0];
+        foreach (var tag in new[] { "v" + name, name })
+        {
+            using var response = await _http.GetAsync(
+                new Uri($"https://api.github.com/repos/{Owner}/{Repository}/releases/tags/{Uri.EscapeDataString(tag)}"),
+                cancellationToken).ConfigureAwait(false);
+            if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+            {
+                continue;
+            }
+
+            if (!response.IsSuccessStatusCode)
+            {
+                UpdateLog.Refused(_logger, (int)response.StatusCode);
+                return null;
+            }
+
+            using var document = JsonDocument.Parse(await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false));
+            var release = document.RootElement;
+            return release.ValueKind == JsonValueKind.Object && !IsTrue(release, "draft") && !IsTrue(release, "prerelease")
+                && TryParse(Text(release, "tag_name"), out var version) && version == current
+                && Text(release, "html_url") is { } page && IsReleasePage(page)
+                && TryPublishedAt(release, out var publishedAt) ? publishedAt : null;
+        }
+
+        return null;
+    }
+
+    private static bool TryPublishedAt(JsonElement root, out DateTimeOffset publishedAt)
+    {
+        publishedAt = default;
+        return root.TryGetProperty("published_at", out var value) && value.ValueKind == JsonValueKind.String
+            && value.TryGetDateTimeOffset(out publishedAt);
     }
 
     private async Task SaveAsync(Func<UpdateSettings, UpdateSettings> change, CancellationToken cancellationToken)

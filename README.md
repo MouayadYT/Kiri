@@ -71,7 +71,7 @@ The icon in the notification area opens the full window with all your conversati
 
 <h2><img src="docs/images/heading-updates.png" alt="Updates" height="53" /></h2>
 
-While Kiri is running, it looks for a new release on this repository as it starts and when you open it, at most **once every 30 days**. All it sends is the request for the latest release: nothing about you or what you ask. When one is out it offers to open the release page, or to ignore that version. To check now, open *Settings → About → Check for updates*.
+While Kiri is running, it looks for a new release on this repository as it starts and when you open it, at most **once every 30 days**. It compares GitHub's publication dates when the release tags differ, so a reset in version numbering does not hide newer releases. It requests only public release metadata: nothing about you or what you ask. When one is out it offers to open the release page, or to ignore that version. To check now, open *Settings → About → Check for updates*.
 
 ---
 
